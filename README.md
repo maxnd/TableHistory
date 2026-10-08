@@ -71,7 +71,7 @@ In the right side of the app, the Gantt diagram shows the historical location of
 To gather data from AI (like Gemini), copy them in the clipboard and paste them in the app already formatted, use a prompt like this:
 
 ```
-Provide information about [person, evento or document] formatted strictly as a single line CSV record matching this exact header structure:
+Provide information about [person, event or document] formatted strictly as a single line CSV record matching this exact header structure:
 
 TableHistoryItems:
 Kind,Name,StartYear,StartUncertain,EndYear,EndUncertain,Place,Notes
