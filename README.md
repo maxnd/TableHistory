@@ -52,19 +52,19 @@ In the right side of the app, the Gantt diagram shows the historical location of
 
 ### Items
 
-Add item: add a new item.
-Edit item: edit the current item (the double click on it does the same).
-Delete items: delete the selected items.
-Copy selected: copy in the clipboard the selected items.
-Paste from selection: paste from the clipboard the items copied with the previous functionality.
-Find: find the first item that contains the specified text in the name, place or notes.
-Find next: find the next item that contains the specified text in the name, place or notes.
+- Add item: add a new item.
+- Edit item: edit the current item (the double click on it does the same).
+- Delete items: delete the selected items.
+- Copy selected: copy in the clipboard the selected items.
+- Paste from selection: paste from the clipboard the items copied with the previous functionality.
+- Find: find the first item that contains the specified text in the name, place or notes.
+- Find next: find the next item that contains the specified text in the name, place or notes.
 
 ### View
-Zoom In diagram: make the diagram wider.
-Zoom Out Diagram: make the diagram more narrow.
-Reset Zoom Diagram: reset the zoom of the diagram.
-Enter full screen: make the app fuul screen.
+- Zoom In diagram: make the diagram wider.
+- Zoom Out Diagram: make the diagram more narrow.
+- Reset Zoom Diagram: reset the zoom of the diagram.
+- Enter full screen: make the app fuul screen.
 
 ### Use of AI to gather data
 
