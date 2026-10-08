@@ -8,7 +8,7 @@ Author and copyright: Massimo Nardello, Modena (Italy) 2026.
 
 TableHistory is a free and open-source app released under the GPLv3 license useful to manage items of historical events, documents and persons, and to show them in a Gantt diagram. The app has been written in C++ and Qt libraries with the support of Google Gemini, it has been compiled only for macOS and the interface is in English.
 
-Download the latest version of the app from [GitHub Releases](https://github.com/maxnd/TableHistory/releases/latest) and copy it in the `Applications` folder.
+Download the latest version of the app for Mac from [GitHub Releases](https://github.com/maxnd/TableHistory/releases/latest) and copy it in the `Applications` folder.
 
 The available package of the app has been compiled for Mac with Silicon chip (M1 or following), and is *not* notarized by Apple. To run it, see the [Apple instructions](https://support.apple.com/en-us/102445) (section “If you want to open an app that hasn’t been notarized or is from an unidentified developer”), or simply copy the package in the `Applications` folder and run in the terminal:
 
@@ -29,9 +29,17 @@ The form to edit the items looks like this:
 
 ## Features
 
-The app may manage many items of persons, documents and events in a grid at the left side of the interface. Each item may have a name, a beginning and end year - the last one may be omitted -, a place and some notes. The buttons above the editor of the notes allow formatting of the text as heading 1, 2 or 3, bold, italics and to remove formatting. The grid is read-only, and the items my be edited witin a form that is shown with a double click on them. More items may be selected by clicking on them while holding the `Shift` or `Command` buttons. Then they be deleted or copied in the clipboard to be pasted in another file. It's also possibile to search for an item containing a text in its name, place or notes. The data are stored in a `.csv` file, so no database is used.
+The app may manage many items of persons, documents and events in a grid at the left side of the interface. Each item may have a name, a beginning and end year - the last one may be omitted -, a place and some formatted notes.
+
+The grid is read-only, and each item my be edited within a form that is shown with a double click on it. Click on a header of a column of the grid to sort the items in ascending and then in descending order on that column.
+
+More items may be selected by clicking on them while holding the `Shift` or `Command` buttons. Then they be deleted or copied in the clipboard to be pasted in another file. It's also possibile to search for an item containing a text in its name, place or notes.
+
+The buttons above the editor of the notes allow formatting of the text as heading 1, 2 or 3, bold, italics and to remove formatting.
 
 In the right side of the app, the Gantt diagram shows the historical location of the various items. The diagram may be zoomed (see the zoom bar at the bottom) and scrolled.
+
+ The data are stored in a `.csv` file, so no database is used.
 
 ## Menu items
 
@@ -68,7 +76,7 @@ In the right side of the app, the Gantt diagram shows the historical location of
 
 ### Use of AI to gather data
 
-To gather data from AI (like Gemini), copy them in the clipboard and paste them in the app already formatted, use a prompt like this:
+It's possible to gather data from AI (like Gemini), copy them in the clipboard and paste them in the different fields of the app. To do so, use a prompt like this:
 
 ```
 Provide information about [person, event or document] formatted strictly as a single line CSV record matching this exact header structure:
@@ -83,4 +91,4 @@ Place must be wrapped in double quotes if it contains spaces or commas.
 Notes must contain a brief summary or a complete text formatted with basic HTML tags (like <b>, <i>, <p>) and wrapped in double quotes.
 ```
 
-Then copy the result and paste it in the app with the menu item `Items - Paste from selection`.
+Then copy the result of the AI and paste it in the app with the menu item `Items - Paste from selection`.
