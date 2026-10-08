@@ -2,7 +2,7 @@
 
 # TableHistory
 
-Version 1.0.0, published on October 9 2026.
+Version 1.0.0, published on October 8 2026.
 
 Author and copyright: Massimo Nardello, Modena (Italy) 2026.
 
