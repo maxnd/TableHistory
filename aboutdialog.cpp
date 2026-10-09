@@ -22,7 +22,7 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
         iconLabel->setPixmap(pixmap.scaled(128, 128, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
 
-    auto *titleLabel = new QLabel("<h2>TableHistory</h2><h3>Version 1.0.0</h3>", this);
+    auto *titleLabel = new QLabel("<h2>TableHistory</h2><h3>Version 1.0.1</h3>", this);
     titleLabel->setAlignment(Qt::AlignCenter);
 
     auto *descLabel = new QLabel("A free and open source C++ Qt 6 application<br>for managing historical records and Gantt timelines.", this);
@@ -34,6 +34,13 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
     copyrightLabel->setAlignment(Qt::AlignCenter);
     copyrightLabel->setStyleSheet("color: #555555; font-size: 10pt;");
 
+    auto *websiteLabel = new QLabel("<a href=\"https://github.com/maxnd/TableHistory/\">Website on GitHub</a>", this);
+    websiteLabel->setTextFormat(Qt::RichText);
+    websiteLabel->setTextInteractionFlags(Qt::TextBrowserInteraction);
+    websiteLabel->setOpenExternalLinks(true);
+    websiteLabel->setAlignment(Qt::AlignCenter);
+
+
     auto *closeBtn = new QPushButton("Close", this);
     closeBtn->setFixedWidth(100);
     connect(closeBtn, &QPushButton::clicked, this, &QDialog::accept);
@@ -42,6 +49,7 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
     layout->addSpacing(5);
     layout->addWidget(titleLabel);
     layout->addWidget(descLabel);
+    layout->addWidget(websiteLabel);
     layout->addStretch();
     layout->addWidget(copyrightLabel);
     layout->addSpacing(10);

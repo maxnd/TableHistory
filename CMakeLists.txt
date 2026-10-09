@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(TableHistory VERSION 1.0.0 LANGUAGES CXX)
+project(TableHistory VERSION 1.0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -51,6 +51,7 @@ if(APPLE)
         MACOSX_BUNDLE_BUNDLE_NAME "TableHistory"
         MACOSX_BUNDLE_ICON_FILE "icon.icns"
     )
+
     # Automatically bundle Qt libraries using macdeployqt
     get_target_property(_qmake_executable Qt6::qmake IMPORTED_LOCATION)
     get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)

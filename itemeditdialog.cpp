@@ -70,14 +70,16 @@ void ItemEditDialog::setupUi() {
 
     auto *startLayout = new QHBoxLayout();
     m_startYearSpin = new QSpinBox(this);
-    m_startYearSpin->setRange(-10000, 3000);
+    m_startYearSpin->setRange(0, 2500);
+    m_startYearSpin->setSpecialValueText(" ");
     m_startUncertainCheck = new QCheckBox("Uncertain (?)", this);
     startLayout->addWidget(m_startYearSpin);
     startLayout->addWidget(m_startUncertainCheck);
 
     auto *endLayout = new QHBoxLayout();
     m_endYearSpin = new QSpinBox(this);
-    m_endYearSpin->setRange(-10000, 3000);
+    m_endYearSpin->setRange(0, 2500);
+    m_endYearSpin->setSpecialValueText(" ");
     m_endUncertainCheck = new QCheckBox("Uncertain (?)", this);
     endLayout->addWidget(m_endYearSpin);
     endLayout->addWidget(m_endUncertainCheck);

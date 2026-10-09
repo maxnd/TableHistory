@@ -2,13 +2,13 @@
 
 # TableHistory
 
-Version 1.0.0, published on October 8 2026.
+Version 1.0.1, published on October 9 2026.
 
 Author and copyright: Massimo Nardello, Modena (Italy) 2026.
 
 TableHistory is a free and open-source app released under the GPLv3 license useful to manage items of historical events, documents and persons, and to show them in a Gantt diagram. The app has been written in C++ and Qt libraries with the support of Google Gemini, it has been compiled only for macOS and the interface is in English.
 
-Download the latest version of the app for Mac from [GitHub Releases](https://github.com/maxnd/TableHistory/releases/latest) and copy it in the `Applications` folder.
+To use the app, download the latest package from [GitHub Releases](https://github.com/maxnd/TableHistory/releases/latest) and copy it in the `Applications` folder.
 
 The available package of the app has been compiled for Mac with Silicon chip (M1 or following), and is *not* notarized by Apple. To run it, see the [Apple instructions](https://support.apple.com/en-us/102445) (section “If you want to open an app that hasn’t been notarized or is from an unidentified developer”), or simply copy the package in the `Applications` folder and run in the terminal:
 
@@ -29,7 +29,7 @@ The form to edit the items looks like this:
 
 ## Features
 
-The app may manage many items of persons, documents and events in a grid at the left side of the interface. Each item may have a name, a beginning and end year - the last one may be omitted -, a place and some formatted notes.
+The app may manage many items of persons, documents and events in a grid at the left side of the interface. Each item may have a name, a beginning and end year - the 0 value means empty -, a place and some formatted notes.
 
 The grid is read-only, and each item my be edited within a form that is shown with a double click on it. Click on a header of a column of the grid to sort the items in ascending and then in descending order on that column.
 
@@ -69,10 +69,10 @@ In the right side of the app, the Gantt diagram shows the historical location of
 - Find next: find the next item that contains the specified text in the name, place or notes.
 
 ### View
-- Zoom In diagram: make the diagram wider.
+- Zoom In Diagram: make the diagram wider.
 - Zoom Out Diagram: make the diagram more narrow.
 - Reset Zoom Diagram: reset the zoom of the diagram.
-- Enter full screen: make the app fuul screen.
+- Enter full screen: make the app full screen.
 
 ### Use of AI to gather data
 
@@ -85,7 +85,7 @@ TableHistoryItems:
 Kind,Name,StartYear,StartUncertain,EndYear,EndUncertain,Place,Notes
 
 Kind must be either Person (value: 2), Document (value: 1), or Event (value: 0).
-StartYear and EndYear must be numbers (skip the second if it's a single-date event/document).
+StartYear and EndYear must be numbers (set the second to 0 if it's a single-date event/document).
 StartUncertain and EndUncertain must be true or false.
 Place must be wrapped in double quotes if it contains spaces or commas.
 Notes must contain a brief summary or a complete text formatted with basic HTML tags (like <b>, <i>, <p>) and wrapped in double quotes.

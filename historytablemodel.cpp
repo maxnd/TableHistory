@@ -45,14 +45,24 @@ QVariant HistoryTableModel::data(const QModelIndex &index, int role) const {
         switch (index.column()) {
         case ColKind:
             return HistoryItem::kindToString(item.kind);
-        case ColName: return item.name;
-        case ColStartYear: return item.startYear;
-        case ColStartUncertain: return QVariant(); // Checkbox
-        case ColEndYear: return item.endYear;
-        case ColEndUncertain: return QVariant();   // Checkbox
-        case ColPlace: return item.place;
-        case ColNotes: return item.notes;
-        default: break;
+        case ColName:
+            return item.name;
+        case ColStartYear:
+            if (item.startYear == 0) return QVariant(QString(" ")); // Show space if 0
+            return item.startYear;
+        case ColStartUncertain:
+            return QVariant(); // Checkbox
+        case ColEndYear:
+            if (item.endYear == 0) return QVariant(QString(" ")); // Show space if 0
+            return item.endYear;
+        case ColEndUncertain:
+            return QVariant();   // Checkbox
+        case ColPlace:
+            return item.place;
+        case ColNotes:
+            return item.notes;
+        default:
+            break;
         }
     } else if (role == Qt::CheckStateRole) {
         if (index.column() == ColStartUncertain) {

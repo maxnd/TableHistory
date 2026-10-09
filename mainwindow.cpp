@@ -49,6 +49,9 @@
 #include <QShortcut>
 #include <QFileDialog>
 #include <QPixmap>
+#include <QTextDocument>
+
+
 
 static QStringList parseCsvLine(const QString &line);
 
@@ -796,8 +799,6 @@ void MainWindow::itemPaste() {
 
     QMessageBox::information(this, "Paste Items", QString("%1 item(s) successfully pasted.").arg(newItems.size()));
 }
-
-#include <QTextDocument>
 
 void MainWindow::performSearch(const QString &query, int startIndex, bool wrap) {
     if (query.isEmpty() || m_proxyModel->rowCount() == 0) return;
