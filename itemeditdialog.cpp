@@ -70,16 +70,26 @@ void ItemEditDialog::setupUi() {
 
     auto *startLayout = new QHBoxLayout();
     m_startYearSpin = new QSpinBox(this);
-    m_startYearSpin->setRange(0, 2500);
-    m_startYearSpin->setSpecialValueText(" ");
+    m_startYearSpin->setRange(-20000, 3000);
+    m_startYearSpin->setAttribute(Qt::WA_MacShowFocusRect, false);
+    if (isDarkMode) {
+        m_startYearSpin->setStyleSheet("QSpinBox { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; padding: 2px; }");
+    } else {
+        m_startYearSpin->setStyleSheet("QSpinBox { border: 1px solid #cccccc; border-radius: 4px; padding: 2px; }");
+    }
     m_startUncertainCheck = new QCheckBox("Uncertain (?)", this);
     startLayout->addWidget(m_startYearSpin);
     startLayout->addWidget(m_startUncertainCheck);
 
     auto *endLayout = new QHBoxLayout();
     m_endYearSpin = new QSpinBox(this);
-    m_endYearSpin->setRange(0, 2500);
-    m_endYearSpin->setSpecialValueText(" ");
+    m_endYearSpin->setRange(-20000, 3000);
+    m_endYearSpin->setAttribute(Qt::WA_MacShowFocusRect, false);
+    if (isDarkMode) {
+        m_endYearSpin->setStyleSheet("QSpinBox { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; padding: 2px; }");
+    } else {
+        m_endYearSpin->setStyleSheet("QSpinBox { border: 1px solid #cccccc; border-radius: 4px; padding: 2px; }");
+    }
     m_endUncertainCheck = new QCheckBox("Uncertain (?)", this);
     endLayout->addWidget(m_endYearSpin);
     endLayout->addWidget(m_endUncertainCheck);
@@ -87,7 +97,7 @@ void ItemEditDialog::setupUi() {
     m_placeEdit = new QLineEdit(this);
     m_placeEdit->setMinimumWidth(fieldWidth);
     if (isDarkMode) {
-      m_placeEdit->setStyleSheet("QLineEdit { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; padding: 2px; }");
+        m_placeEdit->setStyleSheet("QLineEdit { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; padding: 2px; }");
     } else {
         m_placeEdit->setStyleSheet("QLineEdit { border-radius: 4px; padding: 2px; }");
     }
@@ -103,37 +113,41 @@ void ItemEditDialog::setupUi() {
     m_h1Btn->setText("H1");
     m_h1Btn->setCheckable(true);
     m_h1Btn->setToolTip("Header 1");
+    m_h1Btn->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_1));
     m_h1Btn->setStyleSheet("QToolButton { font-weight: bold; padding: 2px 6px; }");
 
     m_h2Btn = new QToolButton(this);
     m_h2Btn->setText("H2");
     m_h2Btn->setCheckable(true);
     m_h2Btn->setToolTip("Header 2");
+    m_h2Btn->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_2));
     m_h2Btn->setStyleSheet("QToolButton { font-weight: bold; padding: 2px 6px; }");
 
     m_h3Btn = new QToolButton(this);
     m_h3Btn->setText("H3");
     m_h3Btn->setCheckable(true);
     m_h3Btn->setToolTip("Header 3");
+    m_h3Btn->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_3));
     m_h3Btn->setStyleSheet("QToolButton { font-weight: bold; padding: 2px 6px; }");
 
     m_boldBtn = new QToolButton(this);
     m_boldBtn->setText("B");
     m_boldBtn->setCheckable(true);
     m_boldBtn->setShortcut(QKeySequence::Bold);
-    m_boldBtn->setToolTip("Bold (Ctrl+B)");
+    m_boldBtn->setToolTip("Bold");
     m_boldBtn->setStyleSheet("QToolButton { font-weight: bold; padding: 2px 8px; }");
 
     m_italicBtn = new QToolButton(this);
     m_italicBtn->setText("I");
     m_italicBtn->setCheckable(true);
     m_italicBtn->setShortcut(QKeySequence::Italic);
-    m_italicBtn->setToolTip("Italic (Ctrl+I)");
+    m_italicBtn->setToolTip("Italic");
     m_italicBtn->setStyleSheet("QToolButton { font-style: italic; padding: 2px 8px; }");
 
     m_clearFmtBtn = new QToolButton(this);
     m_clearFmtBtn->setText("Tx");
     m_clearFmtBtn->setToolTip("Clear Formatting");
+    m_clearFmtBtn->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_4));
     m_clearFmtBtn->setStyleSheet("QToolButton { padding: 2px 6px; }");
 
     notesHeaderLayout->addWidget(m_h1Btn);
@@ -153,7 +167,7 @@ void ItemEditDialog::setupUi() {
     m_notesEdit->document()->setDefaultFont(memoFont);
     m_notesEdit->setMinimumHeight(120);
     if (isDarkMode) {
-      m_notesEdit->setStyleSheet("QTextEdit { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; }");
+        m_notesEdit->setStyleSheet("QTextEdit { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; }");
     }
 
     notesLayout->addLayout(notesHeaderLayout);
@@ -174,6 +188,8 @@ void ItemEditDialog::setupUi() {
 
     auto *buttonLayout = new QHBoxLayout();
     auto *okBtn = new QPushButton("OK", this);
+    okBtn->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Return));
+
     auto *cancelBtn = new QPushButton("Cancel", this);
 
     buttonLayout->addStretch();

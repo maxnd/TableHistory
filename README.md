@@ -2,15 +2,15 @@
 
 # TableHistory
 
-Version 1.0.1, published on October 9 2026.
+Version 1.0.2, published on October 10 2026.
 
 Author and copyright: Massimo Nardello, Modena (Italy) 2026.
 
-TableHistory is a free and open-source app released under the GPLv3 license useful to manage items of historical events, documents and persons, and to show them in a Gantt diagram. The app has been written in C++ and Qt libraries with the support of Google Gemini, it has been compiled only for macOS and the interface is in English.
+TableHistory is a free and open-source app released under the GPLv3 license useful to manage items of historical events, documents and persons, and to show them in a Gantt diagram. The app has been written in C++ and Qt libraries with the support of Google Gemini. For now, it has been compiled only for macOS and the interface is in English.
 
 To use the app, download the latest package from [GitHub Releases](https://github.com/maxnd/TableHistory/releases/latest) and copy it in the `Applications` folder.
 
-The available package of the app has been compiled for Mac with Silicon chip (M1 or following), and is *not* notarized by Apple. To run it, see the [Apple instructions](https://support.apple.com/en-us/102445) (section “If you want to open an app that hasn’t been notarized or is from an unidentified developer”), or simply copy the package in the `Applications` folder and run in the terminal:
+The package of the app has been compiled for Mac with Silicon chip (M1 or following), and is *not* notarized by Apple. To run it, see the [Apple instructions](https://support.apple.com/en-us/102445) (section “If you want to open an app that hasn’t been notarized or is from an unidentified developer”), or simply copy the package in the `Applications` folder and run in the terminal:
 
 ```
 xattr -r -d com.apple.quarantine /Applications/TableHistory.app
@@ -29,17 +29,30 @@ The form to edit the items looks like this:
 
 ## Features
 
-The app may manage many items of persons, documents and events in a grid at the left side of the interface. Each item may have a name, a beginning and end year - the 0 value means empty -, a place and some formatted notes.
+The app may create and manage many items of persons, documents and events in a grid at the left side of the interface. Each item may have a name, a beginning and end year, a place and some formatted notes. The range of the years is from -20000 (20.000 b.C.) to 3000 (3.000 c.e.). If the beginning year is equal to the end year, because the item refers to a single-year document or event, the end year will not be shown in the grid.
 
-The grid is read-only, and each item my be edited within a form that is shown with a double click on it. Click on a header of a column of the grid to sort the items in ascending and then in descending order on that column.
+The beginning and end year are meant just to put meaningfully the event in the diagram. More detailed date and time information, like months or days, is to be typed in the notes.
 
-More items may be selected by clicking on them while holding the `Shift` or `Command` buttons. Then they be deleted or copied in the clipboard to be pasted in another file. It's also possibile to search for an item containing a text in its name, place or notes.
+The grid and the notes field below it are read-only. Each item my be created or edited within a form that is shown with the menu items `Items - Add item...` or `Items - Edit item...`, or with a double click on an existing item in the grid. In the notes, the internet links are properly formatted and functional, but not in the `Add item` / `Edit item` form used to create or edit an item.
 
-The buttons above the editor of the notes allow formatting of the text as heading 1, 2 or 3, bold, italics and to remove formatting.
+Click on a header of a column grid to sort the items in ascending and then in descending order on that column.
 
-In the right side of the app, the Gantt diagram shows the historical location of the various items. The diagram may be zoomed (see the zoom bar at the bottom) and scrolled.
+More items may be selected by clicking on them while holding the `Shift` or `Command` buttons. Then they can be deleted, or copied in the clipboard to be pasted in another file. It's also possibile to search for an item containing a text in its name, place or notes. See below for the convenient menu items and shortcuts.
 
- The data are stored in a `.csv` file, so no database is used.
+In the `Add item` / `Edit item` form, the buttons above the editor of the notes format the text as:
+
+- heading 1 (shortcut: `Meta + 1`);
+- heading 2 (shortcut: `Meta + 2`);
+- heading 3 (shortcut: `Meta + 3`);
+- bold (shortcut: `Meta + B`);
+- italics (shortcut: `Meta + I`);
+- no formatting (shortcut: `Meta + 4`).
+
+Save data and close the form with the button `OK` or the shortcut `Meta + Return`. Press `Esc` to discard changes.
+
+In the right side of the main form of the app, the Gantt diagram shows the historical location of the various items. The diagram may be zoomed (see the zoom bar at the bottom) and scrolled.
+
+Data are stored in a `.csv` file, so no database is used.
 
 ## Menu items
 
@@ -49,14 +62,7 @@ In the right side of the app, the Gantt diagram shows the historical location of
 - Open: open a existing file.
 - Save: save the current file.
 - Save as: save the current file with a new name.
-- Export diagram: export as a picture in `.bmp` format the diagram of the current file.
-
-### Edit
-
-- Cut: cut the selected text in the `Item notes` field.
-- Copy: copy the selected text in the `Item notes` field.
-- Paste: paste the text in the clipboard in the `Item notes` field.
-- Select all: select all the text in the `Item notes` field.
+- Export diagram: export the diagram as a picture in `.bmp` format.
 
 ### Items
 
@@ -85,7 +91,7 @@ TableHistoryItems:
 Kind,Name,StartYear,StartUncertain,EndYear,EndUncertain,Place,Notes
 
 Kind must be either Person (value: 2), Document (value: 1), or Event (value: 0).
-StartYear and EndYear must be numbers (set the second to 0 if it's a single-date event/document).
+StartYear and EndYear must be numbers (set the second as the first if it's a single-date event/document).
 StartUncertain and EndUncertain must be true or false.
 Place must be wrapped in double quotes if it contains spaces or commas.
 Notes must contain a brief summary or a complete text formatted with basic HTML tags (like <b>, <i>, <p>) and wrapped in double quotes.

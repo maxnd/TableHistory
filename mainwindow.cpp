@@ -47,13 +47,49 @@
 #include <QPushButton>
 #include <QTextDocument>
 #include <QShortcut>
-#include <QFileDialog>
 #include <QPixmap>
-#include <QTextDocument>
-
-
+#include <QTextBrowser>
+#include <QRegularExpression>
 
 static QStringList parseCsvLine(const QString &line);
+
+// Helper function to convert plain text URLs into clickable HTML anchor tags safely
+static QString linkifyNotes(QString text) {
+    if (text.isEmpty()) return text;
+
+    // Matches http://, https://, ftp://, or www. URLs that are not already inside an HTML attribute
+    QRegularExpression urlRegex(R"((?<!href=["'])(?<!src=["'])\b((https?|ftp)://[^\s<"']+|www\.[^\s<"']+))", QRegularExpression::CaseInsensitiveOption);
+
+    QRegularExpressionMatchIterator it = urlRegex.globalMatch(text);
+    struct MatchInfo {
+        qsizetype start;
+        qsizetype length;
+        QString url;
+    };
+    QList<MatchInfo> matches;
+    while (it.hasNext()) {
+        QRegularExpressionMatch match = it.next();
+        QString url = match.captured(1);
+        // Skip HTML standard DTD schema links
+        if (url.contains("w3.org", Qt::CaseInsensitive)) {
+            continue;
+        }
+        matches.append({match.capturedStart(1), match.capturedLength(1), url});
+    }
+
+    // Process matches from right to left so index positions do not shift during replacement
+    for (int idx = matches.size() - 1; idx >= 0; --idx) {
+        const auto &m = matches.at(idx);
+        QString href = m.url;
+        if (href.startsWith("www.", Qt::CaseInsensitive)) {
+            href = "https://" + href;
+        }
+        QString replacement = QString("<a href=\"%1\">%2</a>").arg(href, m.url);
+        text.replace(m.start, m.length, replacement);
+    }
+
+    return text;
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent) {
@@ -212,81 +248,25 @@ void MainWindow::setupUi() {
 
     m_leftSplitter->addWidget(m_tableView);
 
-    // 2. Notes Section Container with Bold, Italic, Header, and Clear Formatting Controls
+    // 2. Notes Section Container (Read-Only QTextBrowser)
     auto *notesContainer = new QWidget(this);
     auto *notesLayout = new QVBoxLayout(notesContainer);
     notesLayout->setContentsMargins(0, 6, 0, 6);
 
-    auto *notesHeaderLayout = new QHBoxLayout();
-    auto *notesLabel = new QLabel("<b>Item Notes:</b>", this);
-    notesHeaderLayout->addSpacing(6);
-
-    m_h1Btn = new QToolButton(this);
-    m_h1Btn->setText("H1");
-    m_h1Btn->setCheckable(true);
-    m_h1Btn->setToolTip("Header 1");
-    m_h1Btn->setStyleSheet("QToolButton { font-weight: bold; padding: 2px 6px; }");
-    m_h1Btn->setEnabled(false);
-
-    m_h2Btn = new QToolButton(this);
-    m_h2Btn->setText("H2");
-    m_h2Btn->setCheckable(true);
-    m_h2Btn->setToolTip("Header 2");
-    m_h2Btn->setStyleSheet("QToolButton { font-weight: bold; padding: 2px 6px; }");
-    m_h2Btn->setEnabled(false);
-
-    m_h3Btn = new QToolButton(this);
-    m_h3Btn->setText("H3");
-    m_h3Btn->setCheckable(true);
-    m_h3Btn->setToolTip("Header 3");
-    m_h3Btn->setStyleSheet("QToolButton { font-weight: bold; padding: 2px 6px; }");
-    m_h3Btn->setEnabled(false);
-
-    m_boldBtn = new QToolButton(this);
-    m_boldBtn->setText("B");
-    m_boldBtn->setCheckable(true);
-    m_boldBtn->setShortcut(QKeySequence::Bold);
-    m_boldBtn->setToolTip("Bold (Ctrl+B)");
-    m_boldBtn->setStyleSheet("QToolButton { font-weight: bold; padding: 2px 8px; }");
-    m_boldBtn->setEnabled(false);
-
-    m_italicBtn = new QToolButton(this);
-    m_italicBtn->setText("I");
-    m_italicBtn->setCheckable(true);
-    m_italicBtn->setShortcut(QKeySequence::Italic);
-    m_italicBtn->setToolTip("Italic (Ctrl+I)");
-    m_italicBtn->setStyleSheet("QToolButton { font-style: italic; padding: 2px 8px; }");
-    m_italicBtn->setEnabled(false);
-
-    m_clearFmtBtn = new QToolButton(this);
-    m_clearFmtBtn->setText("Tx");
-    m_clearFmtBtn->setToolTip("Clear Formatting");
-    m_clearFmtBtn->setStyleSheet("QToolButton { padding: 2px 6px; }");
-    m_clearFmtBtn->setEnabled(false);
-
-    notesHeaderLayout->addWidget(notesLabel);
-    notesHeaderLayout->addWidget(m_h1Btn);
-    notesHeaderLayout->addWidget(m_h2Btn);
-    notesHeaderLayout->addWidget(m_h3Btn);
-    notesHeaderLayout->addWidget(m_boldBtn);
-    notesHeaderLayout->addWidget(m_italicBtn);
-    notesHeaderLayout->addWidget(m_clearFmtBtn);
-    notesHeaderLayout->addStretch();
-
-    m_notesMemo = new NotesTextEdit(this);
+    m_notesMemo = new QTextBrowser(this);
+    m_notesMemo->setReadOnly(true);
     QFont memoFont = m_notesMemo->font();
     memoFont.setPointSize(16);
     memoFont.setFamily("Avenir Next");
     m_notesMemo->setFont(memoFont);
     m_notesMemo->document()->setDefaultFont(memoFont);
-    m_notesMemo->setAcceptRichText(true);
+    m_notesMemo->setOpenExternalLinks(true);
     m_notesMemo->setMinimumHeight(120);
     if (isDarkMode) {
-      m_notesMemo->setStyleSheet("QTextEdit { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; }");
+        m_notesMemo->setStyleSheet("QTextBrowser { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; }");
     }
     m_notesMemo->setEnabled(false);
 
-    notesLayout->addLayout(notesHeaderLayout);
     notesLayout->addWidget(m_notesMemo);
 
     m_leftSplitter->addWidget(notesContainer);
@@ -362,18 +342,6 @@ void MainWindow::setupUi() {
     connect(m_tableView, &QTableView::doubleClicked, this, &MainWindow::itemEdit);
     connect(m_tableView->horizontalHeader(), &QHeaderView::sortIndicatorChanged,
             this, [this](int, Qt::SortOrder) { updateGanttItems(); });
-
-    // Notes formatting connections
-    connect(m_boldBtn, &QToolButton::toggled, this, &MainWindow::onNotesBoldToggled);
-    connect(m_italicBtn, &QToolButton::toggled, this, &MainWindow::onNotesItalicToggled);
-    connect(m_h1Btn, &QToolButton::clicked, this, &MainWindow::onNotesH1Clicked);
-    connect(m_h2Btn, &QToolButton::clicked, this, &MainWindow::onNotesH2Clicked);
-    connect(m_h3Btn, &QToolButton::clicked, this, &MainWindow::onNotesH3Clicked);
-    connect(m_clearFmtBtn, &QToolButton::clicked, this, &MainWindow::onNotesClearFmtClicked);
-
-    connect(m_notesMemo, &QTextEdit::currentCharFormatChanged, this, &MainWindow::updateNotesFormatButtons);
-    connect(m_notesMemo, &QTextEdit::cursorPositionChanged, this, &MainWindow::updateNotesFormatButtons);
-    connect(m_notesMemo, &QTextEdit::textChanged, this, &MainWindow::onNotesTextChanged);
 }
 
 void MainWindow::zoomInInterface() {
@@ -384,11 +352,10 @@ void MainWindow::zoomInInterface() {
         qApp->setFont(font);
         this->setFont(font);
 
-        // Explicitly update the grid and its headers
         m_tableView->setFont(font);
         m_tableView->horizontalHeader()->setFont(font);
         m_tableView->verticalHeader()->setFont(font);
-        m_tableView->style()->polish(m_tableView); // Forces style refresh
+        m_tableView->style()->polish(m_tableView);
     }
 }
 
@@ -400,7 +367,6 @@ void MainWindow::zoomOutInterface() {
         qApp->setFont(font);
         this->setFont(font);
 
-        // Explicitly update the grid and its headers
         m_tableView->setFont(font);
         m_tableView->horizontalHeader()->setFont(font);
         m_tableView->verticalHeader()->setFont(font);
@@ -410,11 +376,10 @@ void MainWindow::zoomOutInterface() {
 
 void MainWindow::resetInterfaceZoom() {
     QFont font = qApp->font();
-    font.setPointSize(m_baseFontSize); // Uses your baseline size
+    font.setPointSize(m_baseFontSize);
     qApp->setFont(font);
     this->setFont(font);
 
-    // Explicitly update the grid and its headers
     m_tableView->setFont(font);
     m_tableView->horizontalHeader()->setFont(font);
     m_tableView->verticalHeader()->setFont(font);
@@ -432,19 +397,6 @@ void MainWindow::createMenus() {
     connect(exportAction, &QAction::triggered, this, &MainWindow::exportDiagram);
     fileMenu->addSeparator();
     fileMenu->addAction("Exit", QKeySequence::Quit, this, &QWidget::close);
-
-    // --- Edit Menu (for Notes Text Field) ---
-    QMenu *editMenu = menuBar()->addMenu(tr("&Edit"));
-    m_actionCopy = editMenu->addAction(tr("&Copy"), QKeySequence::Copy, m_notesMemo, &QTextEdit::copy);
-    m_actionCut = editMenu->addAction(tr("Cu&t"), QKeySequence::Cut, m_notesMemo, &QTextEdit::cut);
-    m_actionPaste = editMenu->addAction(tr("&Paste"), QKeySequence::Paste, m_notesMemo, &QTextEdit::paste);
-    editMenu->addSeparator();
-    m_actionSelectAll = editMenu->addAction(tr("Select &All"), QKeySequence::SelectAll, m_notesMemo, &QTextEdit::selectAll);
-    // Initially disabled until a row with notes is selected
-    m_actionCopy->setEnabled(false);
-    m_actionCut->setEnabled(false);
-    m_actionPaste->setEnabled(false);
-    m_actionSelectAll->setEnabled(false);
 
     QMenu *itemsMenu = menuBar()->addMenu("&Items");
     itemsMenu->addAction("&Add Item...", QKeySequence::New, this, &MainWindow::itemAdd);
@@ -476,14 +428,10 @@ void MainWindow::updateZoomLabel(double factor) {
 }
 
 void MainWindow::onTableSelectionChanged(const QItemSelection &, const QItemSelection &) {
-    m_isUpdatingNotes = true;
     QModelIndexList selected = m_tableView->selectionModel()->selectedRows();
     bool hasSelection = !selected.isEmpty();
 
-    // Enable/disable text edit actions based on selection state
     if (m_actionCopy) m_actionCopy->setEnabled(hasSelection);
-    if (m_actionCut) m_actionCut->setEnabled(hasSelection);
-    if (m_actionPaste) m_actionPaste->setEnabled(hasSelection);
     if (m_actionSelectAll) m_actionSelectAll->setEnabled(hasSelection);
 
     if (hasSelection) {
@@ -493,175 +441,15 @@ void MainWindow::onTableSelectionChanged(const QItemSelection &, const QItemSele
         const auto &item = m_model->getItem(row);
 
         m_notesMemo->setEnabled(true);
-        m_boldBtn->setEnabled(true);
-        m_italicBtn->setEnabled(true);
-        m_h1Btn->setEnabled(true);
-        m_h2Btn->setEnabled(true);
-        m_h3Btn->setEnabled(true);
-        m_clearFmtBtn->setEnabled(true);
-
-        m_notesMemo->setHtml(item.notes);
+        // Process notes to automatically linkify plain text URLs while skipping DTD schema links
+        m_notesMemo->setHtml(linkifyNotes(item.notes));
 
         m_ganttWidget->setSelectedIndex(proxyRow);
         m_ganttWidget->scrollToItem(proxyRow);
     } else {
         m_notesMemo->clear();
         m_notesMemo->setEnabled(false);
-        m_boldBtn->setEnabled(false);
-        m_italicBtn->setEnabled(false);
-        m_h1Btn->setEnabled(false);
-        m_h2Btn->setEnabled(false);
-        m_h3Btn->setEnabled(false);
-        m_clearFmtBtn->setEnabled(false);
         m_ganttWidget->setSelectedIndex(-1);
-    }
-    m_isUpdatingNotes = false;
-    updateNotesFormatButtons();
-}
-
-void MainWindow::applyHeadingLevel(QTextEdit *editor, int level) {
-    QTextCursor cursor = editor->textCursor();
-    cursor.beginEditBlock();
-
-    QTextBlockFormat blockFmt = cursor.blockFormat();
-    int currentLevel = blockFmt.headingLevel();
-    int newLevel = (currentLevel == level) ? 0 : level;
-
-    blockFmt.setHeadingLevel(newLevel);
-    cursor.setBlockFormat(blockFmt);
-
-    qreal defaultSize = editor->font().pointSizeF();
-    if (defaultSize <= 0) {
-        defaultSize = 10.0;
-    }
-
-    QTextCharFormat charFmt;
-    if (newLevel == 1) {
-        charFmt.setFontPointSize(defaultSize * 2.0); // Match standard H1 scale (~2x)
-        charFmt.setFontWeight(QFont::Bold);
-    } else if (newLevel == 2) {
-        charFmt.setFontPointSize(defaultSize * 1.5); // Match standard H2 scale (~1.5x)
-        charFmt.setFontWeight(QFont::Bold);
-    } else if (newLevel == 3) {
-        charFmt.setFontPointSize(defaultSize * 1.17); // Match standard H3 scale (~1.17x)
-        charFmt.setFontWeight(QFont::Bold);
-    } else {
-        charFmt.setFontPointSize(defaultSize);
-        charFmt.setFontWeight(QFont::Normal);
-    }
-
-    if (!cursor.hasSelection()) {
-        cursor.select(QTextCursor::BlockUnderCursor);
-    }
-
-    cursor.mergeCharFormat(charFmt);
-    cursor.endEditBlock();
-
-    editor->setTextCursor(cursor);
-    updateNotesFormatButtons();
-}
-
-static void clearTextFormatting(QTextEdit *editor) {
-    QTextCursor cursor = editor->textCursor();
-    cursor.beginEditBlock();
-
-    bool hasSel = cursor.hasSelection();
-    int startPos = hasSel ? cursor.selectionStart() : cursor.position();
-    int endPos = hasSel ? cursor.selectionEnd() : cursor.position();
-
-    // Reset heading levels on all selected blocks
-    QTextBlock startBlock = editor->document()->findBlock(startPos);
-    QTextBlock endBlock = editor->document()->findBlock(qMax(startPos, endPos > startPos ? endPos - 1 : endPos));
-
-    QTextBlock block = startBlock;
-    while (block.isValid()) {
-        QTextCursor blockCursor(block);
-        QTextBlockFormat blockFmt = blockCursor.blockFormat();
-        blockFmt.setHeadingLevel(0);
-        blockCursor.setBlockFormat(blockFmt);
-
-        if (block == endBlock) break;
-        block = block.next();
-    }
-
-    int defaultSize = editor->font().pointSize();
-    if (defaultSize <= 0) {
-        defaultSize = 10;
-    }
-
-    QTextCharFormat cleanFmt;
-    cleanFmt.setFontPointSize(defaultSize);
-    cleanFmt.setFontWeight(QFont::Normal);
-    cleanFmt.setFontItalic(false);
-    cleanFmt.setFontUnderline(false);
-
-    if (!hasSel) {
-        cursor.select(QTextCursor::BlockUnderCursor);
-    }
-
-    cursor.setCharFormat(cleanFmt);
-    cursor.endEditBlock();
-    editor->setTextCursor(cursor);
-}
-
-void MainWindow::onNotesClearFmtClicked() {
-    clearTextFormatting(m_notesMemo);
-    updateNotesFormatButtons();
-}
-
-void MainWindow::onNotesBoldToggled(bool checked) {
-    QTextCharFormat fmt;
-    fmt.setFontWeight(checked ? QFont::Bold : QFont::Normal);
-    m_notesMemo->mergeCurrentCharFormat(fmt);
-}
-
-void MainWindow::onNotesItalicToggled(bool checked) {
-    QTextCharFormat fmt;
-    fmt.setFontItalic(checked);
-    m_notesMemo->mergeCurrentCharFormat(fmt);
-}
-
-void MainWindow::onNotesH1Clicked() { applyHeadingLevel(m_notesMemo, 1); }
-void MainWindow::onNotesH2Clicked() { applyHeadingLevel(m_notesMemo, 2); }
-void MainWindow::onNotesH3Clicked() { applyHeadingLevel(m_notesMemo, 3); }
-
-void MainWindow::updateNotesFormatButtons() {
-    QTextCharFormat format = m_notesMemo->currentCharFormat();
-    QTextBlockFormat blockFormat = m_notesMemo->textCursor().blockFormat();
-    int headingLevel = blockFormat.headingLevel();
-
-    m_boldBtn->blockSignals(true);
-    m_italicBtn->blockSignals(true);
-    m_h1Btn->blockSignals(true);
-    m_h2Btn->blockSignals(true);
-    m_h3Btn->blockSignals(true);
-
-    m_boldBtn->setChecked(format.fontWeight() == QFont::Bold);
-    m_italicBtn->setChecked(format.fontItalic());
-    m_h1Btn->setChecked(headingLevel == 1);
-    m_h2Btn->setChecked(headingLevel == 2);
-    m_h3Btn->setChecked(headingLevel == 3);
-
-    m_boldBtn->blockSignals(false);
-    m_italicBtn->blockSignals(false);
-    m_h1Btn->blockSignals(false);
-    m_h2Btn->blockSignals(false);
-    m_h3Btn->blockSignals(false);
-}
-
-void MainWindow::onNotesTextChanged() {
-    if (m_isUpdatingNotes) return;
-
-    QModelIndexList selected = m_tableView->selectionModel()->selectedRows();
-    if (!selected.isEmpty()) {
-        int row = m_proxyModel->mapToSource(selected.first()).row(); // Mappatura corretta
-        HistoryItem item = m_model->getItem(row);
-
-        QString htmlNotes = m_notesMemo->toHtml();
-        htmlNotes.remove('\n').remove('\r');
-
-        item.notes = htmlNotes;
-        m_model->updateItem(row, item);
     }
 }
 
@@ -696,7 +484,7 @@ void MainWindow::itemEdit() {
         return;
     }
 
-    int row = m_proxyModel->mapToSource(selected.first()).row(); // Mappatura corretta
+    int row = m_proxyModel->mapToSource(selected.first()).row();
     ItemEditDialog dialog(m_model->getItem(row), this);
     if (dialog.exec() == QDialog::Accepted) {
         m_model->updateItem(row, dialog.getItem());
@@ -737,11 +525,9 @@ void MainWindow::itemCopy() {
         return;
     }
 
-    // Unique identifier header to recognize TableHistory items
     QString clipText = "TableHistoryItems:\n";
     clipText += "Kind,Name,StartYear,StartUncertain,EndYear,EndUncertain,Place,Notes\n";
 
-    // Collect and sort source rows to preserve order
     QList<int> rows;
     for (int i = 0; i < selectedRows.size(); ++i) {
         rows.append(m_proxyModel->mapToSource(selectedRows.at(i)).row());
@@ -791,7 +577,6 @@ void MainWindow::itemPaste() {
         return;
     }
 
-    // Append pasted items to existing ones
     QList<HistoryItem> items = m_model->items();
     items.append(newItems);
     m_model->setItems(items);
@@ -807,11 +592,9 @@ void MainWindow::performSearch(const QString &query, int startIndex, bool wrap) 
     int currentIndex = startIndex;
     bool found = false;
 
-    // Loop through rows starting from startIndex
     for (int step = 0; step < rowCount; ++step) {
         int i = (currentIndex + step) % rowCount;
 
-        // If we wrapped around and don't want to re-search or already finished a round
         if (!wrap && step > 0 && i <= startIndex) break;
 
         QModelIndex proxyIndex = m_proxyModel->index(i, 0);
@@ -829,7 +612,6 @@ void MainWindow::performSearch(const QString &query, int startIndex, bool wrap) 
             QItemSelectionModel *selModel = m_tableView->selectionModel();
             selModel->clearSelection();
 
-            // Set current index and select the full row cleanly
             selModel->setCurrentIndex(proxyIndex, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
             m_tableView->selectRow(i);
             m_tableView->scrollTo(proxyIndex, QAbstractItemView::PositionAtCenter);
@@ -859,19 +641,13 @@ void MainWindow::exportDiagram() {
     if (fileName.isEmpty())
         return;
 
-    // Ensure the filename ends with .bmp
     if (!fileName.endsWith(".bmp", Qt::CaseInsensitive)) {
         fileName += ".bmp";
     }
 
-    // Render the full Gantt widget onto a QPixmap
     QPixmap pixmap(m_ganttWidget->size());
     m_ganttWidget->render(&pixmap);
-
-    // Save as BMP
-    if (!pixmap.save(fileName, "BMP")) {
-        // Optional: Handle save failure if needed
-    }
+    pixmap.save(fileName, "BMP");
 }
 
 void MainWindow::findItem() {
@@ -915,7 +691,6 @@ void MainWindow::findItem() {
     m_lastSearchQuery = searchText;
     m_actionFindNext->setEnabled(true);
 
-    // Determine starting index: start from current selected row + 1, or 0 if none
     int startRow = 0;
     QModelIndexList selected = m_tableView->selectionModel()->selectedRows();
     if (!selected.isEmpty()) {
@@ -931,7 +706,6 @@ void MainWindow::findNextItem() {
         return;
     }
 
-    // Start looking from the row immediately after the last found match
     int startRow = 0;
     if (m_lastSearchIndex >= 0) {
         startRow = (m_lastSearchIndex + 1) % m_proxyModel->rowCount();
@@ -943,7 +717,6 @@ void MainWindow::findNextItem() {
     }
 
     performSearch(m_lastSearchQuery, startRow, true);
-
 }
 
 void MainWindow::fileNew() {
@@ -1009,18 +782,9 @@ static QStringList parseCsvLine(const QString &line) {
 }
 
 void MainWindow::loadCsvFile(const QString &filePath) {
-    // Clear and disable the notes memo and its controls when opening a file
     m_notesMemo->clear();
     m_notesMemo->setEnabled(false);
-    if (m_boldBtn) m_boldBtn->setEnabled(false);
-    if (m_italicBtn) m_italicBtn->setEnabled(false);
-    if (m_h1Btn) m_h1Btn->setEnabled(false);
-    if (m_h2Btn) m_h2Btn->setEnabled(false);
-    if (m_h3Btn) m_h3Btn->setEnabled(false);
-    if (m_clearFmtBtn) m_clearFmtBtn->setEnabled(false);
     if (m_actionCopy) m_actionCopy->setEnabled(false);
-    if (m_actionCut) m_actionCut->setEnabled(false);
-    if (m_actionPaste) m_actionPaste->setEnabled(false);
     if (m_actionSelectAll) m_actionSelectAll->setEnabled(false);
 
     QFile file(filePath);
@@ -1089,7 +853,7 @@ bool MainWindow::saveCsvFile(const QString &filePath, bool showConfirmation) {
     settings.setValue("lastFilePath", filePath);
 
     if (showConfirmation) {
-        QMessageBox::information(this, "Saved", "Data successfully saved.");
+        // QMessageBox::information(this, "Saved", "Data successfully saved.");
     }
     return true;
 }

@@ -53,7 +53,7 @@ QVariant HistoryTableModel::data(const QModelIndex &index, int role) const {
         case ColStartUncertain:
             return QVariant(); // Checkbox
         case ColEndYear:
-            if (item.endYear == 0) return QVariant(QString(" ")); // Show space if 0
+            if (item.endYear == item.startYear) return QVariant();
             return item.endYear;
         case ColEndUncertain:
             return QVariant();   // Checkbox

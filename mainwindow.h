@@ -24,20 +24,18 @@
 
 #include <QMainWindow>
 #include <QTableView>
-#include <QTextEdit>
+#include <QTextBrowser>
 #include <QTextCursor>
 #include <QTextBlock>
 #include <QTextList>
 #include <QKeyEvent>
 #include <QLabel>
-#include <QToolButton>
 #include <QSplitter>
 #include <QCloseEvent>
 #include <QTextCharFormat>
 #include <QSortFilterProxyModel>
 #include "historytablemodel.h"
 #include "ganttwidget.h"
-#include "notestextedit.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -65,24 +63,12 @@ private slots:
     void onTableSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void onGanttItemSelected(int index);
 
-    // Notes Formatting Slots
-    void onNotesBoldToggled(bool checked);
-    void onNotesItalicToggled(bool checked);
-    void onNotesH1Clicked();
-    void onNotesH2Clicked();
-    void onNotesH3Clicked();
-    void updateNotesFormatButtons();
-    void onNotesTextChanged();
-    void onNotesClearFmtClicked();
-
     void zoomInInterface();
     void zoomOutInterface();
     void resetInterfaceZoom();
 
 private:
     QAction *m_actionCopy = nullptr;
-    QAction *m_actionCut = nullptr;
-    QAction *m_actionPaste = nullptr;
     QAction *m_actionSelectAll = nullptr;
     QAction *m_actionFind = nullptr;
     QAction *m_actionFindNext = nullptr;
@@ -96,7 +82,6 @@ private:
     bool saveCsvFile(const QString &filePath, bool showConfirmation = true);
     void readSettings();
     void saveSettings();
-    void applyHeadingLevel(QTextEdit *editor, int level);
     void updateGanttItems();
     void findItem();
     void findNextItem();
@@ -105,14 +90,7 @@ private:
     HistoryTableModel *m_model = nullptr;
     QSortFilterProxyModel *m_proxyModel = nullptr;
     QTableView *m_tableView = nullptr;
-    NotesTextEdit *m_notesMemo = nullptr;
-
-    QToolButton *m_boldBtn = nullptr;
-    QToolButton *m_italicBtn = nullptr;
-    QToolButton *m_h1Btn = nullptr;
-    QToolButton *m_h2Btn = nullptr;
-    QToolButton *m_h3Btn = nullptr;
-    QToolButton *m_clearFmtBtn;
+    QTextBrowser *m_notesMemo = nullptr;
 
     GanttWidget *m_ganttWidget = nullptr;
     QLabel *m_zoomLabel = nullptr;
@@ -120,7 +98,6 @@ private:
     QSplitter *m_leftSplitter = nullptr;
 
     QString m_currentFilePath;
-    bool m_isUpdatingNotes = false;
     int m_baseFontSize = 10;
 };
 

@@ -298,8 +298,8 @@ void GanttWidget::paintEvent(QPaintEvent *) {
         painter.setFont(font);
 
         QString label;
-        if (item.endYear) {
-            label = QString("%1 (%2-%3)")
+        if (item.endYear != item.startYear) {
+            label = QString("%1 (%2 – %3)")
             .arg(item.name,
                  item.startUncertain ? QString("~%1").arg(item.startYear) : QString::number(item.startYear),
                  item.endUncertain ? QString("~%1").arg(item.endYear) : QString::number(item.endYear));
