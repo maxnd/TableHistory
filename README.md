@@ -41,12 +41,12 @@ More items may be selected by clicking on them while holding the `Shift` or `Com
 
 In the `Add item` / `Edit item` form, the buttons above the editor of the notes format the text as:
 
-- heading 1 (shortcut: `Meta + 1` or `Ctrl + 1');
-- heading 2 (shortcut: `Meta + 2` or `Ctrl + 2');
-- heading 3 (shortcut: `Meta + 3` or `Ctrl + 3');
-- bold (shortcut: `Meta + B` or `Ctrl + B');
-- italics (shortcut: `Meta + I` or `Ctrl + I');
-- no formatting (shortcut: `Meta + 4` or `Ctrl + 4').
+- heading 1 (shortcut: `Meta + 1` or `Ctrl + 1`);
+- heading 2 (shortcut: `Meta + 2` or `Ctrl + 2`);
+- heading 3 (shortcut: `Meta + 3` or `Ctrl + 3`);
+- bold (shortcut: `Meta + B` or `Ctrl + B`);
+- italics (shortcut: `Meta + I` or `Ctrl + I`);
+- no formatting (shortcut: `Meta + 4` or `Ctrl + 4`).
 
 Save data and close the form with the button `OK` or the shortcut `Meta / Ctrl + Return`. Press `Esc` to discard changes.
 
