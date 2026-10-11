@@ -58,25 +58,37 @@ void ItemEditDialog::setupUi() {
     m_kindCombo->addItem("Person", static_cast<int>(ItemKind::Person));
     m_kindCombo->addItem("Document", static_cast<int>(ItemKind::Document));
     m_kindCombo->addItem("Event", static_cast<int>(ItemKind::Event));
+#ifdef Q_OS_APPLE
+    if (isDarkMode) {
+        m_kindCombo->setStyleSheet("QLineEdit { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; padding: 2px; }");
+    } else {
+        m_kindCombo->setStyleSheet("QLineEdit { border-radius: 4px; padding: 2px; }");
+    }
+#endif
 
     m_nameEdit = new QLineEdit(this);
     int fieldWidth = m_nameEdit->sizeHint().width() * 3;
     m_nameEdit->setMinimumWidth(fieldWidth);
+
+#ifdef Q_OS_APPLE
     if (isDarkMode) {
         m_nameEdit->setStyleSheet("QLineEdit { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; padding: 2px; }");
     } else {
         m_nameEdit->setStyleSheet("QLineEdit { border-radius: 4px; padding: 2px; }");
     }
+#endif
 
     auto *startLayout = new QHBoxLayout();
     m_startYearSpin = new QSpinBox(this);
     m_startYearSpin->setRange(-20000, 3000);
     m_startYearSpin->setAttribute(Qt::WA_MacShowFocusRect, false);
+#ifdef Q_OS_APPLE
     if (isDarkMode) {
         m_startYearSpin->setStyleSheet("QSpinBox { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; padding: 2px; }");
     } else {
         m_startYearSpin->setStyleSheet("QSpinBox { border: 1px solid #cccccc; border-radius: 4px; padding: 2px; }");
     }
+#endif
     m_startUncertainCheck = new QCheckBox("Uncertain (?)", this);
     startLayout->addWidget(m_startYearSpin);
     startLayout->addWidget(m_startUncertainCheck);
@@ -85,22 +97,26 @@ void ItemEditDialog::setupUi() {
     m_endYearSpin = new QSpinBox(this);
     m_endYearSpin->setRange(-20000, 3000);
     m_endYearSpin->setAttribute(Qt::WA_MacShowFocusRect, false);
+#ifdef Q_OS_APPLE
     if (isDarkMode) {
         m_endYearSpin->setStyleSheet("QSpinBox { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; padding: 2px; }");
     } else {
         m_endYearSpin->setStyleSheet("QSpinBox { border: 1px solid #cccccc; border-radius: 4px; padding: 2px; }");
     }
+#endif
     m_endUncertainCheck = new QCheckBox("Uncertain (?)", this);
     endLayout->addWidget(m_endYearSpin);
     endLayout->addWidget(m_endUncertainCheck);
 
     m_placeEdit = new QLineEdit(this);
     m_placeEdit->setMinimumWidth(fieldWidth);
+#ifdef Q_OS_APPLE
     if (isDarkMode) {
         m_placeEdit->setStyleSheet("QLineEdit { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; padding: 2px; }");
     } else {
         m_placeEdit->setStyleSheet("QLineEdit { border-radius: 4px; padding: 2px; }");
     }
+#endif
 
     // Notes Formatting Section
     auto *notesContainer = new QWidget(this);

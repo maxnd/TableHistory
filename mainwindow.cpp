@@ -195,6 +195,9 @@ void MainWindow::setupUi() {
     m_tableView->setShowGrid(false);
     m_tableView->setSortingEnabled(true);
     m_tableView->horizontalHeader()->setSectionsClickable(true);
+    #ifdef Q_OS_WIN
+      m_tableView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    #endif
 
     QString tableViewStyle = "QTableView {";
     if (isDarkMode) {
@@ -209,32 +212,73 @@ void MainWindow::setupUi() {
         "  border-left: none;"
         "  border-bottom: none;"
         "}";
-
+#ifdef Q_OS_APPLE
     if (isDarkMode) {
         tableViewStyle += QString("QAbstractScrollArea::viewport { background-color: %1; }").arg(formColor.name());
+        tableViewStyle +=
+            "QTableCornerButton::section {"
+            "  background: transparent;"
+            "  border-bottom: 1px solid #606060;"
+            "  border-right: 1px solid #606060;"
+            "}"
+            "QHeaderView::section:vertical {"
+            "  border-top: none;"
+            "  border-bottom: none;"
+            "  border-right: 1px solid #606060;"
+            "  border-left: none;"
+            "  background: transparent;"
+            "}"
+            "QHeaderView::section:horizontal {"
+            "  border-top: none;"
+            "  border-bottom: 1px solid #606060;"
+            "  border-right: 0px solid #606060;"
+            "  border-left: 1px solid #606060;"
+            "  background: transparent;"
+            "}";
+    } else {
+        tableViewStyle +=
+            "QTableCornerButton::section {"
+            "  background: transparent;"
+            "  border-bottom: 1px solid #C0C0C0;"
+            "  border-right: 1px solid #C0C0C0;"
+            "}"
+            "QHeaderView::section:vertical {"
+            "  border-top: none;"
+            "  border-bottom: none;"
+            "  border-right: 1px solid #C0C0C0;"
+            "  border-left: none;"
+            "  background: transparent;"
+            "}"
+            "QHeaderView::section:horizontal {"
+            "  border-top: none;"
+            "  border-bottom: 1px solid #C0C0C0;"
+            "  border-right: 0px solid #C0C0C0;"
+            "  border-left: 1px solid #C0C0C0;"
+            "  background: transparent;"
+            "}";
     }
-
+#else
     tableViewStyle +=
         "QTableCornerButton::section {"
         "  background: transparent;"
-        "  border-bottom: 1px solid #606060;"
-        "  border-right: 1px solid #606060;"
+        "  border-bottom: 1px solid #C0C0C0;"
+        "  border-right: 1px solid #C0C0C0;"
         "}"
         "QHeaderView::section:vertical {"
         "  border-top: none;"
         "  border-bottom: none;"
-        "  border-right: 1px solid #606060;"
+        "  border-right: 1px solid #C0C0C0;"
         "  border-left: none;"
         "  background: transparent;"
         "}"
         "QHeaderView::section:horizontal {"
         "  border-top: none;"
-        "  border-bottom: 1px solid #606060;"
-        "  border-right: 0px solid #606060;"
-        "  border-left: 1px solid #606060;"
+        "  border-bottom: 1px solid #C0C0C0;"
+        "  border-right: 0px solid #C0C0C0;"
+        "  border-left: 1px solid #C0C0C0;"
         "  background: transparent;"
         "}";
-
+#endif
     m_tableView->setStyleSheet(tableViewStyle);
 
     m_tableView->horizontalHeader()->setFixedHeight(HEADER_HEIGHT);
@@ -407,7 +451,7 @@ void MainWindow::createMenus() {
     itemsMenu->addAction("&Paste from selection", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_V), this, &MainWindow::itemPaste);
     itemsMenu->addSeparator();
     m_actionFind = itemsMenu->addAction(tr("&Find..."), QKeySequence::Find, this, &MainWindow::findItem);
-    m_actionFindNext = itemsMenu->addAction(tr("Find &Next"), QKeySequence(Qt::ALT | Qt::Key_F), this, &MainWindow::findNextItem);
+    m_actionFindNext = itemsMenu->addAction(tr("Find &Next"), QKeySequence(Qt::ALT | Qt::Key_D), this, &MainWindow::findNextItem);
     m_actionFindNext->setEnabled(false);
 
     QMenu *viewMenu = menuBar()->addMenu("&View");
@@ -696,7 +740,7 @@ void MainWindow::findItem() {
     if (!selected.isEmpty()) {
         startRow = (selected.first().row() + 1) % m_proxyModel->rowCount();
     }
-
+    m_tableView->setFocus();
     performSearch(m_lastSearchQuery, startRow, true);
 }
 
@@ -715,7 +759,7 @@ void MainWindow::findNextItem() {
             startRow = (selected.first().row() + 1) % m_proxyModel->rowCount();
         }
     }
-
+    m_tableView->setFocus();
     performSearch(m_lastSearchQuery, startRow, true);
 }
 
