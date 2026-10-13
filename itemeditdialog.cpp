@@ -177,7 +177,7 @@ void ItemEditDialog::setupUi() {
     m_notesEdit = new NotesTextEdit(this);
     m_notesEdit->setAcceptRichText(true);
     QFont memoFont = m_notesEdit->font();
-    memoFont.setPointSize(16);
+    memoFont.setPointSize(qApp->font().pointSize() + 3);
     memoFont.setFamily("Avenir Next");
     m_notesEdit->setFont(memoFont);
     m_notesEdit->document()->setDefaultFont(memoFont);
@@ -291,13 +291,13 @@ void ItemEditDialog::applyHeadingLevel(int level) {
 
     QTextCharFormat charFmt;
     if (newLevel == 1) {
-        charFmt.setFontPointSize(defaultSize * 2.0); // ~2x scale
+        charFmt.setFontPointSize(defaultSize * 1.5);
         charFmt.setFontWeight(QFont::Bold);
     } else if (newLevel == 2) {
-        charFmt.setFontPointSize(defaultSize * 1.5); // ~1.5x scale
+        charFmt.setFontPointSize(defaultSize * 1.3);
         charFmt.setFontWeight(QFont::Bold);
     } else if (newLevel == 3) {
-        charFmt.setFontPointSize(defaultSize * 1.17); // ~1.17x scale
+        charFmt.setFontPointSize(defaultSize * 1.1);
         charFmt.setFontWeight(QFont::Bold);
     } else {
         charFmt.setFontPointSize(defaultSize);

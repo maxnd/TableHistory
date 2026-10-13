@@ -3,7 +3,7 @@
 ; Non-commercial use only.
 
 #define MyAppName "TableHistory"
-#define MyAppVersion "1.0.3"
+#define MyAppVersion "1.0.4"
 #define MyAppPublisher "Massimo Nardello"
 #define MyAppURL "https://github.com/maxnd/TableHistory"
 #define MyAppExeName "TableHistory.exe"
@@ -36,7 +36,7 @@ LicenseFile=C:\Users\msnar\OneDrive\Sorgenti\WinTableHistory\LICENSE
 ;PrivilegesRequired=lowest
 OutputDir=C:\Users\msnar\OneDrive\Sorgenti\WinTableHistory
 OutputBaseFilename=TableHistorySetup
-SetupIconFile=C:\Users\msnar\OneDrive\Sorgenti\WinTableHistory\resources\icon.ico
+SetupIconFile=C:\Users\msnar\OneDrive\Sorgenti\WinTableHistory\icons\icon.ico
 SolidCompression=yes
 WizardStyle=modern dynamic
 

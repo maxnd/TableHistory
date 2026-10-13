@@ -86,6 +86,7 @@ private:
     void findItem();
     void findNextItem();
     void performSearch(const QString &query, int startIndex, bool wrap);
+    void updateStatusBar();
 
     HistoryTableModel *m_model = nullptr;
     QSortFilterProxyModel *m_proxyModel = nullptr;

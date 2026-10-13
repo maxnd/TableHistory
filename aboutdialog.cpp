@@ -16,13 +16,13 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
     // App Icon Label
     auto *iconLabel = new QLabel(this);
     iconLabel->setAlignment(Qt::AlignCenter);
-    QString iconPath = QCoreApplication::applicationDirPath() + "/../Resources/icon.png";
+    QString iconPath = ":/icons/icon.png";
     QPixmap pixmap(iconPath);
     if (!pixmap.isNull()) {
         iconLabel->setPixmap(pixmap.scaled(128, 128, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
 
-    auto *titleLabel = new QLabel("<h2>TableHistory</h2><h3>Version 1.0.3</h3>", this);
+    auto *titleLabel = new QLabel("<h2>TableHistory</h2><h3>Version 1.0.4</h3>", this);
     titleLabel->setAlignment(Qt::AlignCenter);
 
     auto *descLabel = new QLabel("A free and open source C++ Qt 6 application<br>for managing historical records and Gantt timelines.", this);

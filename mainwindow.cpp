@@ -50,6 +50,11 @@
 #include <QPixmap>
 #include <QTextBrowser>
 #include <QRegularExpression>
+#include <QPdfWriter>
+#include <QPainter>
+#include <QPageSize>
+#include <QPageLayout>
+#include <QStandardPaths>
 
 static QStringList parseCsvLine(const QString &line);
 
@@ -300,7 +305,7 @@ void MainWindow::setupUi() {
     m_notesMemo = new QTextBrowser(this);
     m_notesMemo->setReadOnly(true);
     QFont memoFont = m_notesMemo->font();
-    memoFont.setPointSize(16);
+    memoFont.setPointSize(qApp->font().pointSize() + 3);
     memoFont.setFamily("Avenir Next");
     m_notesMemo->setFont(memoFont);
     m_notesMemo->document()->setDefaultFont(memoFont);
@@ -443,9 +448,9 @@ void MainWindow::createMenus() {
     fileMenu->addAction("Exit", QKeySequence::Quit, this, &QWidget::close);
 
     QMenu *itemsMenu = menuBar()->addMenu("&Items");
-    itemsMenu->addAction("&Add Item...", QKeySequence::New, this, &MainWindow::itemAdd);
-    itemsMenu->addAction("&Edit Item...", QKeySequence(Qt::CTRL | Qt::Key_E), this, &MainWindow::itemEdit);
-    itemsMenu->addAction("&Delete Items", QKeySequence::Delete, this, &MainWindow::itemDelete);
+    itemsMenu->addAction("&Add...", QKeySequence::New, this, &MainWindow::itemAdd);
+    itemsMenu->addAction("&Edit...", QKeySequence(Qt::CTRL | Qt::Key_E), this, &MainWindow::itemEdit);
+    itemsMenu->addAction("&Delete", QKeySequence::Delete, this, &MainWindow::itemDelete);
     itemsMenu->addSeparator();
     itemsMenu->addAction("&Copy selected", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C), this, &MainWindow::itemCopy);
     itemsMenu->addAction("&Paste from selection", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_V), this, &MainWindow::itemPaste);
@@ -518,6 +523,7 @@ void MainWindow::itemAdd() {
         HistoryItem item = dialog.getItem();
         m_model->addItem(item);
         updateGanttItems();
+        updateStatusBar();
     }
 }
 
@@ -560,6 +566,7 @@ void MainWindow::itemDelete() {
             m_model->removeItem(row);
         }
         updateGanttItems();
+        updateStatusBar();
     }
 }
 
@@ -679,19 +686,35 @@ void MainWindow::exportDiagram() {
         this,
         tr("Export Gantt Diagram"),
         "",
-        tr("Bitmap Files (*.bmp);;All Files (*)")
+        tr("PDF Files (*.pdf);;All Files (*)")
         );
 
     if (fileName.isEmpty())
         return;
 
-    if (!fileName.endsWith(".bmp", Qt::CaseInsensitive)) {
-        fileName += ".bmp";
+    if (!fileName.endsWith(".pdf", Qt::CaseInsensitive)) {
+        fileName += ".pdf";
     }
 
-    QPixmap pixmap(m_ganttWidget->size());
-    m_ganttWidget->render(&pixmap);
-    pixmap.save(fileName, "BMP");
+    QPdfWriter pdfWriter(fileName);
+    pdfWriter.setPageSize(QPageSize(QPageSize::A4));
+    pdfWriter.setPageOrientation(QPageLayout::Landscape);
+    pdfWriter.setResolution(300); // Higher resolution for crisp vector/text output
+
+    QPainter painter;
+    if (painter.begin(&pdfWriter)) {
+        // Retrieve available paint area dimensions on the PDF page
+        QRectF rect = pdfWriter.pageLayout().paintRectPixels(pdfWriter.resolution());
+
+        double x_scale = rect.width() / double(m_ganttWidget->width());
+        double y_scale = rect.height() / double(m_ganttWidget->height());
+        // Maintain aspect ratio by using the smaller scale factor, or stretch to fit
+        double scale = qMin(x_scale, y_scale);
+
+        painter.scale(scale, scale);
+        m_ganttWidget->render(&painter);
+        painter.end();
+    }
 }
 
 void MainWindow::findItem() {
@@ -769,17 +792,15 @@ void MainWindow::fileNew() {
     m_notesMemo->clear();
     m_currentFilePath.clear();
 
-    QList<QLabel*> labels = statusBar()->findChildren<QLabel*>();
-    if (!labels.isEmpty()) {
-        labels.first()->clear();
-    }
+    updateStatusBar();
 
     QSettings settings("TableHistory", "TableHistory");
     settings.remove("lastFilePath");
 }
 
 void MainWindow::fileOpen() {
-    QString path = QFileDialog::getOpenFileName(this, "Open Historical Data", QString(), "CSV Files (*.csv)");
+    QString initialPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    QString path = QFileDialog::getOpenFileName(this, "Open Historical Data", initialPath, "CSV Files (*.csv)");
     if (!path.isEmpty()) {
         loadCsvFile(path);
     }
@@ -794,7 +815,8 @@ void MainWindow::fileSave() {
 }
 
 void MainWindow::fileSaveAs() {
-    QString path = QFileDialog::getSaveFileName(this, "Save Historical Data", "history.csv", "CSV Files (*.csv)");
+    QString initialPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/history.csv";
+    QString path = QFileDialog::getSaveFileName(this, "Save Historical Data", initialPath, "CSV Files (*.csv)");
     if (!path.isEmpty()) {
         saveCsvFile(path);
     }
@@ -862,10 +884,7 @@ void MainWindow::loadCsvFile(const QString &filePath) {
     updateGanttItems();
     m_currentFilePath = filePath;
 
-    QList<QLabel*> labels = statusBar()->findChildren<QLabel*>();
-    if (!labels.isEmpty()) {
-        labels.first()->setText(QString("File: %1").arg(filePath));
-    }
+    updateStatusBar();
 
     QSettings settings("TableHistory", "TableHistory");
     settings.setValue("lastFilePath", filePath);
@@ -888,10 +907,7 @@ bool MainWindow::saveCsvFile(const QString &filePath, bool showConfirmation) {
 
     m_currentFilePath = filePath;
 
-    QList<QLabel*> labels = statusBar()->findChildren<QLabel*>();
-    if (!labels.isEmpty()) {
-        labels.first()->setText(QString("File: %1").arg(filePath));
-    }
+    updateStatusBar();
 
     QSettings settings("TableHistory", "TableHistory");
     settings.setValue("lastFilePath", filePath);
@@ -900,4 +916,20 @@ bool MainWindow::saveCsvFile(const QString &filePath, bool showConfirmation) {
         // QMessageBox::information(this, "Saved", "Data successfully saved.");
     }
     return true;
+}
+
+void MainWindow::updateStatusBar() {
+    int itemCount = m_model->rowCount();
+    QString statusText;
+
+    if (!m_currentFilePath.isEmpty()) {
+        statusText = QString("File: %1  |  Items: %2").arg(m_currentFilePath).arg(itemCount);
+    } else {
+        statusText = QString("Items: %1").arg(itemCount);
+    }
+
+    QList<QLabel*> labels = statusBar()->findChildren<QLabel*>();
+    if (!labels.isEmpty()) {
+        labels.first()->setText(statusText);
+    }
 }

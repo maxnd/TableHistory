@@ -294,7 +294,7 @@ void GanttWidget::paintEvent(QPaintEvent *) {
         painter.setPen(itemLabelColor);
         QFont font = painter.font();
         font.setBold(isSelected);
-        font.setPointSize(11);
+        font.setPointSize(qMax(9, qApp->font().pointSize()));
         painter.setFont(font);
 
         QString label;
