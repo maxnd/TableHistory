@@ -1,4 +1,4 @@
-<img align="top" src="https://github.com/maxnd/TableHistory/raw/main/resources/icon.png" width="128">
+<img align="top" src="https://github.com/maxnd/TableHistory/raw/main/icons/icon.png" width="128">
 
 # TableHistory
 
