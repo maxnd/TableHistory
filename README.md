@@ -39,6 +39,12 @@ Click on a header of a column grid to sort the items in ascending and then in de
 
 More items may be selected by clicking on them while holding the `Shift` or `Command` buttons. Then they can be deleted, or copied in the clipboard to be pasted in another file. It's also possibile to search for an item containing a text in its name, place or notes. See below for the convenient menu items and shortcuts.
 
+In TableHistory, it's possible to delete individual items from a file or copy and paste some of them into another file without compromising the functionality of both. For this reason, the app does not support links between items. In fact, if some items were deleted or copied to a new file, any existing links between them and other items might be broken.
+
+This limitation is also a feature. It makes possible to quickly create sub-archives by copying and pasting only specific items from the current file into a new file, whether for focused analysis on a smaller amount of data or to share them with others. The absence of a linking functionality ensures that the file containing the subset of items remains fully functional, with no broken links.
+
+To group records by argument or period, add tags to the notes, which can then be located using the search function of the app. To be sure that the search will work properly, insert the hash (or other symbol) also at the end of the word  (e.g. `#roman-history#`).
+
 In the `Add item` / `Edit item` form, the buttons above the editor of the notes format the selected text as:
 
 - heading 1 (shortcut: `Meta + 1` or `Ctrl + 1`);
