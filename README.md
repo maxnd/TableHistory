@@ -16,6 +16,8 @@ The package for Mac has been compiled for Mac with a Silicon chip (M1 or followi
 xattr -r -d com.apple.quarantine /Applications/TableHistory.app
 ```
 
+See in the [wiki section](https://github.com/maxnd/TableHistory/wiki) a nice presentation of the app.
+
 ## Look of the app
 
 On Mac in dark mode, the app looks like this:
