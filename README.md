@@ -6,7 +6,9 @@ Version 1.0.5, published on October 15 2026.
 
 Author and copyright: Massimo Nardello, Modena (Italy) 2026.
 
-TableHistory is a free and open-source app released under the GPLv3 license useful to manage items of historical events, documents and persons, and to show them in a diagram. The app has been written in C++ and Qt libraries with the support of Google Gemini. It runs on Windows and macOS, and the interface is currently only in English.
+TableHistory is a free and open-source app released under the GPLv3 license useful to manage items of historical events, documents and persons, and to show them in a diagram. Data can be easily retrieved and imported in the app from LLMs like Google Gemini.
+
+The app has been written in C++ and Qt libraries with the support of Google Gemini. It runs on Windows and macOS, and the interface is currently only in English.
 
 To use the app, download the latest package from [GitHub Releases](https://github.com/maxnd/TableHistory/releases/latest).
 
@@ -16,7 +18,12 @@ The package for Mac has been compiled for Mac with a Silicon chip (M1 or followi
 xattr -r -d com.apple.quarantine /Applications/TableHistory.app
 ```
 
+---
 See in the [wiki section](https://github.com/maxnd/TableHistory/wiki) a nice presentation of the app.
+
+Listen to a [interesting detailed podcast](https://github.com/maxnd/TableHistory/raw/main/podcast/Introducing_TableHistory.mp3) about the use of the app made with Google Gemini.
+
+---
 
 ## Look of the app
 
