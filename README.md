@@ -114,7 +114,7 @@ StartUncertain and EndUncertain must be true or false.
 Place must be wrapped in double quotes if it contains spaces or commas.
 Notes must contain a brief summary or a complete text formatted with basic HTML tags (like <b>, <i>, <p>) and wrapped in double quotes.
 
-Provide the CSV data inside a code block. The CSV lines must be preceded by these two lines:
+Provide the CSV data inside a code block, whose first two lines must be:
 
 TableHistoryItems:
 Kind,Name,StartYear,StartUncertain,EndYear,EndUncertain,Place,Notes
