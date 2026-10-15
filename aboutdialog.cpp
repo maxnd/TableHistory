@@ -22,7 +22,7 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
         iconLabel->setPixmap(pixmap.scaled(128, 128, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
 
-    auto *titleLabel = new QLabel("<h2>TableHistory</h2><h3>Version 1.0.4</h3>", this);
+    auto *titleLabel = new QLabel("<h2>TableHistory</h2><h3>Version 1.0.5</h3>", this);
     titleLabel->setAlignment(Qt::AlignCenter);
 
     auto *descLabel = new QLabel("A free and open source C++ Qt 6 application<br>for managing historical records and Gantt timelines.", this);
@@ -32,7 +32,6 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
     // Copyright Notice
     auto *copyrightLabel = new QLabel("Copyright © 2026 Massimo Nardello.<br>All rights reserved under GPLv3 licence.", this);
     copyrightLabel->setAlignment(Qt::AlignCenter);
-    copyrightLabel->setStyleSheet("color: #555555; font-size: 10pt;");
 
     auto *websiteLabel = new QLabel("<a href=\"https://github.com/maxnd/TableHistory/\">Website on GitHub</a>", this);
     websiteLabel->setTextFormat(Qt::RichText);

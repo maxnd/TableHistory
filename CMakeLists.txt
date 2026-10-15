@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(TableHistory VERSION 1.0.4 LANGUAGES CXX)
+project(TableHistory VERSION 1.0.5 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -55,6 +55,7 @@ if(APPLE)
         MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
         MACOSX_BUNDLE_COPYRIGHT "Copyright (C) 2026 Massimo Nardello"
     )
+
 
     # Automatically bundle Qt libraries using macdeployqt
     get_target_property(_qmake_executable Qt6::qmake IMPORTED_LOCATION)

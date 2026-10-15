@@ -442,6 +442,33 @@ void MainWindow::createMenus() {
     fileMenu->addAction("&Save", QKeySequence::Save, this, &MainWindow::fileSave);
     fileMenu->addAction("Save &As...", QKeySequence::SaveAs, this, &MainWindow::fileSaveAs);
     fileMenu->addSeparator();
+
+    // --- Recent Files Submenu ---
+    m_recentFilesMenu = fileMenu->addMenu(tr("Recent &Files"));
+    for (int i = 0; i < MaxRecentFiles; ++i) {
+        m_recentFileActions[i] = m_recentFilesMenu->addAction(QString(), this, [this, i]() {
+            QAction *action = qobject_cast<QAction*>(sender());
+            if (action) {
+                QString filePath = action->data().toString();
+                if (!filePath.isEmpty() && QFile::exists(filePath)) {
+                    loadCsvFile(filePath);
+                } else {
+                    QMessageBox::warning(this, tr("Open File"), tr("The file no longer exists."));
+                    // Remove missing file from recent list
+                    QSettings settings("TableHistory", "TableHistory");
+                    QStringList files = settings.value("recentFileList").toStringList();
+                    files.removeAll(filePath);
+                    settings.setValue("recentFileList", files);
+                    updateRecentFileActions();
+                }
+            }
+        });
+        m_recentFileActions[i]->setVisible(false);
+    }
+    updateRecentFileActions();
+
+    fileMenu->addSeparator();
+
     QAction *exportAction = fileMenu->addAction(tr("&Export diagram..."));
     connect(exportAction, &QAction::triggered, this, &MainWindow::exportDiagram);
     fileMenu->addSeparator();
@@ -452,12 +479,16 @@ void MainWindow::createMenus() {
     itemsMenu->addAction("&Edit...", QKeySequence(Qt::CTRL | Qt::Key_E), this, &MainWindow::itemEdit);
     itemsMenu->addAction("&Delete", QKeySequence::Delete, this, &MainWindow::itemDelete);
     itemsMenu->addSeparator();
+    m_actionFind = itemsMenu->addAction(tr("&Find..."), QKeySequence::Find, this, &MainWindow::findItem);
+    m_actionFindNext = itemsMenu->addAction(tr("Find &Next"), QKeySequence(Qt::ALT | Qt::Key_G), this, &MainWindow::findNextItem);
+    m_actionFindNext->setEnabled(false);
+    m_actionFindPrev = itemsMenu->addAction(tr("Find &Previous"), QKeySequence(Qt::ALT | Qt::Key_D), this, &MainWindow::findPreviousItem);
+    m_actionFindPrev->setEnabled(false);
+    itemsMenu->addSeparator();
+    itemsMenu->addAction(tr("Find and &select..."), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F), this, &MainWindow::selectFoundItems);
+    itemsMenu->addSeparator();
     itemsMenu->addAction("&Copy selected", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C), this, &MainWindow::itemCopy);
     itemsMenu->addAction("&Paste from selection", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_V), this, &MainWindow::itemPaste);
-    itemsMenu->addSeparator();
-    m_actionFind = itemsMenu->addAction(tr("&Find..."), QKeySequence::Find, this, &MainWindow::findItem);
-    m_actionFindNext = itemsMenu->addAction(tr("Find &Next"), QKeySequence(Qt::ALT | Qt::Key_D), this, &MainWindow::findNextItem);
-    m_actionFindNext->setEnabled(false);
 
     QMenu *viewMenu = menuBar()->addMenu("&View");
     viewMenu->addAction("Zoom &In Diagram", QKeySequence::ZoomIn, m_ganttWidget, &GanttWidget::zoomIn);
@@ -522,7 +553,19 @@ void MainWindow::itemAdd() {
     if (dialog.exec() == QDialog::Accepted) {
         HistoryItem item = dialog.getItem();
         m_model->addItem(item);
+
+        QModelIndex sourceIndex = m_model->index(m_model->rowCount() - 1, 0);
+        QModelIndex proxyIndex = m_proxyModel->mapFromSource(sourceIndex);
+        int sortedRow = proxyIndex.row();
+
+        m_tableView->setCurrentIndex(proxyIndex);
+        m_tableView->selectionModel()->select(proxyIndex, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+        m_tableView->scrollTo(proxyIndex);
+
         updateGanttItems();
+        m_ganttWidget->setSelectedIndex(sortedRow);
+        m_ganttWidget->scrollToItem(sortedRow);
+
         updateStatusBar();
     }
 }
@@ -636,7 +679,7 @@ void MainWindow::itemPaste() {
     QMessageBox::information(this, "Paste Items", QString("%1 item(s) successfully pasted.").arg(newItems.size()));
 }
 
-void MainWindow::performSearch(const QString &query, int startIndex, bool wrap) {
+void MainWindow::performSearch(const QString &query, int startIndex, bool wrap, bool forward) {
     if (query.isEmpty() || m_proxyModel->rowCount() == 0) return;
 
     int rowCount = m_proxyModel->rowCount();
@@ -644,9 +687,12 @@ void MainWindow::performSearch(const QString &query, int startIndex, bool wrap) 
     bool found = false;
 
     for (int step = 0; step < rowCount; ++step) {
-        int i = (currentIndex + step) % rowCount;
-
-        if (!wrap && step > 0 && i <= startIndex) break;
+        int i;
+        if (forward) {
+            i = (currentIndex + step) % rowCount;
+        } else {
+            i = (currentIndex - step % rowCount + rowCount) % rowCount;
+        }
 
         QModelIndex proxyIndex = m_proxyModel->index(i, 0);
         QModelIndex sourceIndex = m_proxyModel->mapToSource(proxyIndex);
@@ -675,7 +721,7 @@ void MainWindow::performSearch(const QString &query, int startIndex, bool wrap) 
     }
 
     if (!found) {
-        QMessageBox::information(this, tr("Find"), tr("No more matching items found for '%1'.").arg(query));
+        QMessageBox::information(this, tr("Find"), tr("No matching items found for '%1'.").arg(query));
     }
 }
 
@@ -757,6 +803,7 @@ void MainWindow::findItem() {
 
     m_lastSearchQuery = searchText;
     m_actionFindNext->setEnabled(true);
+    m_actionFindPrev->setEnabled(true);
 
     int startRow = 0;
     QModelIndexList selected = m_tableView->selectionModel()->selectedRows();
@@ -786,6 +833,69 @@ void MainWindow::findNextItem() {
     performSearch(m_lastSearchQuery, startRow, true);
 }
 
+void MainWindow::findPreviousItem() {
+    if (m_lastSearchQuery.isEmpty()) {
+        findItem();
+        return;
+    }
+
+    int rowCount = m_proxyModel->rowCount();
+    if (rowCount == 0) return;
+
+    int startRow = rowCount - 1;
+    if (m_lastSearchIndex >= 0) {
+        startRow = (m_lastSearchIndex - 1 + rowCount) % rowCount;
+    } else {
+        QModelIndexList selected = m_tableView->selectionModel()->selectedRows();
+        if (!selected.isEmpty()) {
+            startRow = (selected.first().row() - 1 + rowCount) % rowCount;
+        }
+    }
+
+    m_tableView->setFocus();
+    performSearch(m_lastSearchQuery, startRow, true, false); // false = backward search
+}
+
+void MainWindow::addToRecentFiles(const QString &filePath) {
+    if (filePath.isEmpty()) return;
+
+    QSettings settings("TableHistory", "TableHistory");
+    QStringList files = settings.value("recentFileList").toStringList();
+
+    files.removeAll(filePath);
+    files.prepend(filePath);
+
+    while (files.size() > MaxRecentFiles) {
+        files.removeLast();
+    }
+
+    settings.setValue("recentFileList", files);
+    updateRecentFileActions();
+}
+
+void MainWindow::updateRecentFileActions() {
+    QSettings settings("TableHistory", "TableHistory");
+    QStringList files = settings.value("recentFileList").toStringList();
+
+    int numRecentFiles = qMin(files.size(), (int)MaxRecentFiles);
+
+    for (int i = 0; i < numRecentFiles; ++i) {
+        // Show file name with keyboard shortcut index (1-8)
+        QString text = QString("&%1 %2").arg(i + 1).arg(QFileInfo(files[i]).fileName());
+        m_recentFileActions[i]->setText(text);
+        m_recentFileActions[i]->setData(files[i]);
+        m_recentFileActions[i]->setVisible(true);
+    }
+
+    for (int j = numRecentFiles; j < MaxRecentFiles; ++j) {
+        m_recentFileActions[j]->setVisible(false);
+    }
+
+    if (m_recentFilesMenu) {
+        m_recentFilesMenu->setEnabled(numRecentFiles > 0);
+    }
+}
+
 void MainWindow::fileNew() {
     m_model->setItems({});
     updateGanttItems();
@@ -796,6 +906,87 @@ void MainWindow::fileNew() {
 
     QSettings settings("TableHistory", "TableHistory");
     settings.remove("lastFilePath");
+}
+
+void MainWindow::selectFoundItems() {
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Find and Select Items"));
+    dialog.resize(350, 120);
+
+    QVBoxLayout *layout = new QVBoxLayout(&dialog);
+    QLabel *label = new QLabel(tr("Select all items containing text in Name, Place, or Notes:"), &dialog);
+    layout->addWidget(label);
+
+    QLineEdit *lineEdit = new QLineEdit(&dialog);
+    if (!m_lastSearchQuery.isEmpty()) {
+        lineEdit->setText(m_lastSearchQuery);
+        lineEdit->selectAll();
+    }
+    layout->addWidget(lineEdit);
+
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    QPushButton *okButton = new QPushButton(tr("&Select"), &dialog);
+    okButton->setDefault(true);
+    QPushButton *cancelButton = new QPushButton(tr("Cancel"), &dialog);
+
+    buttonLayout->addStretch();
+    buttonLayout->addWidget(okButton);
+    buttonLayout->addWidget(cancelButton);
+    layout->addLayout(buttonLayout);
+
+    connect(okButton, &QPushButton::clicked, &dialog, &QDialog::accept);
+    connect(cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
+
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+
+    QString query = lineEdit->text().trimmed();
+    if (query.isEmpty() || m_proxyModel->rowCount() == 0) {
+        return;
+    }
+
+    m_lastSearchQuery = query;
+    if (m_actionFindNext) {
+        m_actionFindNext->setEnabled(true);
+        m_actionFindPrev->setEnabled(true);
+    }
+
+    QItemSelectionModel *selModel = m_tableView->selectionModel();
+    selModel->clearSelection();
+
+    QItemSelection selection;
+    int matchCount = 0;
+
+    for (int i = 0; i < m_proxyModel->rowCount(); ++i) {
+        QModelIndex proxyIndex = m_proxyModel->index(i, 0);
+        QModelIndex sourceIndex = m_proxyModel->mapToSource(proxyIndex);
+        const HistoryItem &item = m_model->getItem(sourceIndex.row());
+
+        QTextDocument notesDoc;
+        notesDoc.setHtml(item.notes);
+        QString plainNotes = notesDoc.toPlainText();
+
+        if (item.name.contains(query, Qt::CaseInsensitive) ||
+            item.place.contains(query, Qt::CaseInsensitive) ||
+            plainNotes.contains(query, Qt::CaseInsensitive)) {
+
+            QModelIndex leftIndex = m_proxyModel->index(i, 0);
+            QModelIndex rightIndex = m_proxyModel->index(i, m_proxyModel->columnCount() - 1);
+            selection.select(leftIndex, rightIndex);
+            matchCount++;
+        }
+    }
+
+    if (matchCount > 0) {
+        selModel->select(selection, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+        if (!selection.indexes().isEmpty()) {
+            m_tableView->scrollTo(selection.indexes().first(), QAbstractItemView::PositionAtCenter);
+        }
+        m_tableView->setFocus();
+    }
+
+    QMessageBox::information(this, tr("Select Found Items"), tr("Found and selected %1 matching item(s).").arg(matchCount));
 }
 
 void MainWindow::fileOpen() {
@@ -888,7 +1079,11 @@ void MainWindow::loadCsvFile(const QString &filePath) {
 
     QSettings settings("TableHistory", "TableHistory");
     settings.setValue("lastFilePath", filePath);
-}
+
+    m_currentFilePath = filePath;
+    updateStatusBar();
+
+    addToRecentFiles(filePath);}
 
 bool MainWindow::saveCsvFile(const QString &filePath, bool showConfirmation) {
     QFile file(filePath);
@@ -911,6 +1106,11 @@ bool MainWindow::saveCsvFile(const QString &filePath, bool showConfirmation) {
 
     QSettings settings("TableHistory", "TableHistory");
     settings.setValue("lastFilePath", filePath);
+
+    m_currentFilePath = filePath;
+    updateStatusBar();
+
+    addToRecentFiles(filePath);
 
     if (showConfirmation) {
         // QMessageBox::information(this, "Saved", "Data successfully saved.");

@@ -72,6 +72,7 @@ private:
     QAction *m_actionSelectAll = nullptr;
     QAction *m_actionFind = nullptr;
     QAction *m_actionFindNext = nullptr;
+    QAction *m_actionFindPrev = nullptr;
     QShortcut *m_findNextShortcut = nullptr;
     QString m_lastSearchQuery;
     int m_lastSearchIndex = -1;
@@ -85,8 +86,17 @@ private:
     void updateGanttItems();
     void findItem();
     void findNextItem();
-    void performSearch(const QString &query, int startIndex, bool wrap);
+    void findPreviousItem();
+    void selectFoundItems();
+    void performSearch(const QString &query, int startIndex, bool wrap = true, bool forward = true);
     void updateStatusBar();
+
+    enum { MaxRecentFiles = 8 };
+    QAction *m_recentFileActions[MaxRecentFiles];
+    QMenu *m_recentFilesMenu;
+
+    void updateRecentFileActions();
+    void addToRecentFiles(const QString &filePath);
 
     HistoryTableModel *m_model = nullptr;
     QSortFilterProxyModel *m_proxyModel = nullptr;

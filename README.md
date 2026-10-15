@@ -2,7 +2,7 @@
 
 # TableHistory
 
-Version 1.0.4, published on October 13 2026.
+Version 1.0.5, published on October 15 2026.
 
 Author and copyright: Massimo Nardello, Modena (Italy) 2026.
 
@@ -31,17 +31,17 @@ The form to edit the items looks like this:
 
 ## Features
 
-The app may create and manage many items of persons, documents and events in a grid at the left side of the interface. Each item may have a name, a beginning and end year, a place and some formatted notes. The range of the years is from -20000 (20.000 b.C.) to 3000 (3.000 c.e.). If the beginning year is equal to the end year, because the item refers to a single-year document or event, the end year will not be shown in the grid.
+The app may create and manage many items of persons, documents and events in a grid at the left side of the interface. Each item may have a name, a beginning and end year, a place and some formatted notes. The range of the years is from -20000 (20.000 b.C.) to 3000 (3.000 c.e.). If the beginning year is equal to the end year, because the item refers to a single-year document or event, the end year will not be shown in the grid. The possibile author of a document may be typed before or after its title among parentheses or after a separator.
 
-The beginning and end year are meant just to put the person, document or event meaningfully in the diagram. More detailed temporal information, like months or days, is to be typed in the notes.
+The app is meant to manage very wide periods of time, so items’ temporal location is identified only by beginning and end years, not by months or days. If their location were more precise, the diagram would become unmanageable. So, detailed temporal information like months, days or hours is to be typed in the notes.
 
-The grid and the notes field below it are read-only. Each item may be created or edited in a form that is shown with the menu items `Items - Add...` or `Items - Edit...`, or with a double click on an existing item in the grid. In the notes, the internet links are properly formatted and functional, but not in the `Add item` / `Edit item` form used to create or edit an item.
+The grid and the notes field below it are read-only to avoid unwanted changes to existing items. Each item may be created or edited in a form that is shown with the menu items `Items - Add...` or `Items - Edit...`, or with a double click on an existing item in the grid. In the notes, the internet links are properly formatted and functional, but not in the `Add item` / `Edit item` form used to create or edit an item.
 
 Click on a header of a column grid to sort the items in ascending and then in descending order on that column. To sort data on more columns, sort on each one of them starting from the last one. For instance, to have the items sorted by kind and start year, sort them on start year and then on kind.
 
-More items may be selected by clicking on them while holding the `Shift` or `Command` buttons. Then they can be deleted, or copied in the clipboard to be pasted in another file. It's also possibile to search for an item containing a text in its name, place or notes. See below for the convenient menu items and shortcuts.
+More items may be selected by clicking on them while holding the `Shift` or `Command` buttons. Then they can be deleted, or copied in the clipboard to be pasted in another file. It's also possibile to search for an item containing a specified text in its name, place or notes, or select all the items that contain that text. This last function emulates a filter functionality, while maintaining the full view of all the items. See below for the convenient menu items and shortcuts.
 
-In TableHistory, it's possible to delete individual items from a file or copy and paste some of them into another file without compromising the functionality of both. For this reason, the app does not support links between items. In fact, if some items were deleted or copied to a new file, any existing links between them and other items might be broken.
+In TableHistory, it's possible to delete individual items from a file or copy and paste some of them into another file without compromising the functionality of both files. For this reason, the app does not support links between items. In fact, if some items were deleted or copied to a new file, any existing links between them and other items might be broken.
 
 This limitation is also a feature. It makes possible to quickly create sub-archives by copying and pasting only specific items from the current file into a new file, whether for focused analysis on a smaller amount of data or to share them with others. The absence of a linking functionality ensures that the file containing the subset of items remains fully functional, with no broken links.
 
@@ -67,20 +67,23 @@ Data are stored in a `.csv` file, so no database is used.
 ### File
 
 - New: create a new file.
-- Open: open a existing file.
+- Open...: open a existing file.
 - Save: save the current file.
-- Save as: save the current file with a new name.
-- Export diagram: export the diagram as a vectorial PDF.
+- Save as...: save the current file with a new name.
+- Recent files: open the last 8 loaded files.
+- Export diagram...: export the diagram as a vectorial PDF.
 
 ### Items
 
 - Add: add a new item.
 - Edit: edit the current item (double click on it does the same).
 - Delete: delete the selected items.
-- Copy selected: copy in the clipboard the selected items.
-- Paste from selection: paste from the clipboard the items copied with the previous functionality.
-- Find: find the first item that contains the specified text in the name, place or notes.
-- Find next: find the next item that contains the specified text in the name, place or notes.
+- Find...: find the first item that contains the specified text in the name, place or notes.
+- Find next: find the next item that contains the text specified with the `Find` menu item in the name, place or notes.
+- Find previous: find the previous item that contains the text specified with the `Find` menu item in the name, place or notes.
+- Find and select...: select all the items that contain the specified text in the name, place or notes.
+- Copy selected: copy in the clipboard all the selected items.
+- Paste from selection: paste from the clipboard the items copied with the `Copy selected` menu item.
 
 ### View
 
