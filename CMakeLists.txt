@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(TableHistory VERSION 1.0.5 LANGUAGES CXX)
+project(TableHistory VERSION 1.0.6 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -26,6 +26,7 @@ set(PROJECT_SOURCES
     notestextedit.h
     aboutdialog.h
     aboutdialog.cpp
+    resources.qrc
 )
 
 # Set the icon file name for the Info.plist
@@ -44,7 +45,6 @@ if(APPLE)
     add_executable(TableHistory MACOSX_BUNDLE
         ${PROJECT_SOURCES}
         ${app_icon_macos}
-        resources.qrc
     )
     # Explicitly set the bundle icon target property
     set_target_properties(TableHistory PROPERTIES
@@ -55,7 +55,6 @@ if(APPLE)
         MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
         MACOSX_BUNDLE_COPYRIGHT "Copyright (C) 2026 Massimo Nardello"
     )
-
 
     # Automatically bundle Qt libraries using macdeployqt
     get_target_property(_qmake_executable Qt6::qmake IMPORTED_LOCATION)
@@ -80,7 +79,7 @@ if(APPLE)
 
 else()
     set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/icons/icon.rc")
-    add_executable(TableHistory WIN32 ${PROJECT_SOURCES} ${APP_ICON_RESOURCE_WINDOWS} resources.qrc)
+    add_executable(TableHistory WIN32 ${PROJECT_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})
 endif()
 
 target_link_libraries(TableHistory PRIVATE Qt6::Widgets Qt6::Core Qt6::Svg Qt6::Gui)

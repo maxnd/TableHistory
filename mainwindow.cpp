@@ -676,6 +676,8 @@ void MainWindow::itemPaste() {
     m_model->setItems(items);
     updateGanttItems();
 
+    updateStatusBar();
+
     QMessageBox::information(this, "Paste Items", QString("%1 item(s) successfully pasted.").arg(newItems.size()));
 }
 
@@ -728,10 +730,17 @@ void MainWindow::performSearch(const QString &query, int startIndex, bool wrap, 
 void MainWindow::exportDiagram() {
     if (!m_ganttWidget) return;
 
+    if (m_proxyModel->rowCount() > 0) {
+        m_tableView->selectRow(0);
+    }
+    m_ganttWidget->setSelectedIndex(-1);
+
+    QString initialPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/diagram.pdf";
+
     QString fileName = QFileDialog::getSaveFileName(
         this,
         tr("Export Gantt Diagram"),
-        "",
+        initialPath,
         tr("PDF Files (*.pdf);;All Files (*)")
         );
 
@@ -741,6 +750,18 @@ void MainWindow::exportDiagram() {
     if (!fileName.endsWith(".pdf", Qt::CaseInsensitive)) {
         fileName += ".pdf";
     }
+
+    // Temporarily force light mode styling/palette on the Gantt widget for export
+    QString originalStyle = m_ganttWidget->styleSheet();
+    QPalette originalPalette = m_ganttWidget->palette();
+
+    m_ganttWidget->setStyleSheet("background-color: #ffffff; color: #000000;");
+    QPalette lightPalette = m_ganttWidget->palette();
+    lightPalette.setColor(QPalette::Window, Qt::white);
+    lightPalette.setColor(QPalette::WindowText, Qt::black);
+    lightPalette.setColor(QPalette::Text, Qt::black);
+    m_ganttWidget->setPalette(lightPalette);
+    m_ganttWidget->update();
 
     QPdfWriter pdfWriter(fileName);
     pdfWriter.setPageSize(QPageSize(QPageSize::A4));
@@ -752,6 +773,9 @@ void MainWindow::exportDiagram() {
         // Retrieve available paint area dimensions on the PDF page
         QRectF rect = pdfWriter.pageLayout().paintRectPixels(pdfWriter.resolution());
 
+        // Fill the page background with solid white
+        painter.fillRect(rect, Qt::white);
+
         double x_scale = rect.width() / double(m_ganttWidget->width());
         double y_scale = rect.height() / double(m_ganttWidget->height());
         // Maintain aspect ratio by using the smaller scale factor, or stretch to fit
@@ -761,6 +785,11 @@ void MainWindow::exportDiagram() {
         m_ganttWidget->render(&painter);
         painter.end();
     }
+
+    // Restore the original dark theme palette and stylesheet for the UI
+    m_ganttWidget->setStyleSheet(originalStyle);
+    m_ganttWidget->setPalette(originalPalette);
+    m_ganttWidget->update();
 }
 
 void MainWindow::findItem() {

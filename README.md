@@ -2,7 +2,7 @@
 
 # TableHistory
 
-Version 1.0.5, published on October 15 2026.
+Version 1.0.6, published on October 16 2026.
 
 Author and copyright: Massimo Nardello, Modena (Italy) 2026.
 
@@ -38,9 +38,12 @@ The form to edit the items looks like this:
 
 ## Features
 
-The app may create and manage many items of persons, documents and events in a grid at the left side of the interface. Each item may have a name, a beginning and end year, a place and some formatted notes. The range of the years is from -20000 (20.000 b.C.) to 3000 (3.000 c.e.). If the beginning year is equal to the end year, because the item refers to a single-year document or event, the end year will not be shown in the grid. The possibile author of a document may be typed before or after its title among parentheses or after a separator.
+The app may create and manage many historical items in a grid at the left side of the interface. Each item has a kind field, whose value could be `Person`, `Document` or `Event`, a name, a beginning and end year, a place and free-length formatted notes. The `Event` kind may be used also for historical periods. The range of the years is from -20000 (20.000 b.C.) to 3000 (3.000 c.e.). If the beginning year is equal to the end year, because the item refers to a single-year document or event, the end year will not be shown in the grid. The possibile author of a document may be typed before or after its title among parentheses or after a separator.
 
 The app is meant to manage very wide periods of time, so items’ temporal location is identified only by beginning and end years, not by months or days. If their location were more precise, the diagram would become unmanageable. So, detailed temporal information like months, days or hours is to be typed in the notes.
+
+Anyway, if it's necessary to sort the items on a very detailed beginning and end date, a workaround is to type the first date before the name of the items, and then sort the items by name. For this trick to work properly, the date must be in the format `year - month - day`, and possibly the time in the format `hour - minutes`. The year must always be 4 digits long, the month and day always 2 digits long, and the hours and minutes always 2 digits long. For instance: `B.C. 0044/03/15 • Assassination of Julius Caesar`, or `C.E. 1953/06/02 • Coronation of Queen Elizabeth II`, or `C.E. 2001/09/11 08:46 • American Airlines Flight 11 crashes into the North Tower of the World Trade Center`.
+
 
 The grid and the notes field below it are read-only to avoid unwanted changes to existing items. Each item may be created or edited in a form that is shown with the menu items `Items - Add...` or `Items - Edit...`, or with a double click on an existing item in the grid. In the notes, the internet links are properly formatted and functional, but not in the `Add item` / `Edit item` form used to create or edit an item.
 
@@ -65,7 +68,7 @@ In the `Add item` / `Edit item` form, the buttons above the editor of the notes 
 
 To save data and close the form, use the button `OK` or the shortcut `Meta / Ctrl + Return`. Press `Esc` to discard changes.
 
-At the right side of the main form of the app, the Gantt diagram shows the historical location of the various items. The diagram may be zoomed (see the zoom bar at the bottom) and scrolled and exported in a vectorial PDF.
+At the right side of the main form of the app, the Gantt diagram shows the historical location of the various items. When some year is uncertain, the bar is printed not with a solid color but with a lighter grid. The diagram may be zoomed (see the zoom bar at the bottom) and scrolled and exported in a vectorial PDF, always with a white background in spite of the theme of the operative system (light or dark). The PDF can be resized infinitely without loss of quality.
 
 Data are stored in a `.csv` file, so no database is used.
 
