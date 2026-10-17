@@ -3,7 +3,7 @@
 ; Non-commercial use only.
 
 #define MyAppName "TableHistory"
-#define MyAppVersion "1.0.7"
+#define MyAppVersion "1.0.7.1"
 #define MyAppPublisher "Massimo Nardello"
 #define MyAppURL "https://github.com/maxnd/TableHistory"
 #define MyAppExeName "TableHistory.exe"

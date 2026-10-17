@@ -478,8 +478,7 @@ void MainWindow::createMenus() {
     fileMenu->addAction(tr("Export &selected items to PDF..."), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_E), this, &MainWindow::exportSelectedItemsPdf);
     fileMenu->addSeparator();
 
-    QAction *exportAction = fileMenu->addAction(tr("&Export diagram..."), QKeySequence(Qt::CTRL | Qt::Key_D), this, &MainWindow::exportDiagram);
-    connect(exportAction, &QAction::triggered, this, &MainWindow::exportDiagram);
+    fileMenu->addAction(tr("&Export diagram..."), QKeySequence(Qt::CTRL | Qt::Key_D), this, &MainWindow::exportDiagram);
     fileMenu->addSeparator();
     fileMenu->addAction("Exit", QKeySequence::Quit, this, &QWidget::close);
 

@@ -2,7 +2,7 @@
 
 # TableHistory
 
-Version 1.0.7, published on October 17 2026.
+Version 1.0.7.1, published on October 17 2026.
 
 Author and copyright: Massimo Nardello, Modena (Italy) 2026.
 
@@ -136,7 +136,11 @@ Then copy the result of the AI and paste it in the app with the menu item `Items
 - Q. The zoom of the text of the notes doesn't work.
 - A. Select all the text and remove its formatting with the last right button.
 
-## Changes log
+## Revision history
+
+### Version 1.0.7.1
+
+- Bugs fixing.
 
 ### Version 1.0.7
 
