@@ -52,6 +52,7 @@ private slots:
     void fileSave();
     void fileSaveAs();
     void exportDiagram();
+    void exportSelectedItemsPdf();
 
     void itemAdd();
     void itemEdit();

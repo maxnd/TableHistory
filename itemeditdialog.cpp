@@ -26,6 +26,7 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QKeySequence>
+#include <QShortcut>
 #include <QTextBlockFormat>
 #include <QGuiApplication>
 #include <QScreen>
@@ -186,6 +187,20 @@ void ItemEditDialog::setupUi() {
         m_notesEdit->setStyleSheet("QTextEdit { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; }");
     }
 
+#ifdef Q_OS_APPLE
+    QShortcut *notesZoomInShortcut = new QShortcut(QKeySequence(Qt::META | Qt::ALT | Qt::Key_Plus), this);
+    QShortcut *notesZoomInEqualShortcut = new QShortcut(QKeySequence(Qt::META | Qt::ALT | Qt::Key_Equal), this); // Handles unshifted '+' key
+    QShortcut *notesZoomOutShortcut = new QShortcut(QKeySequence(Qt::META | Qt::ALT | Qt::Key_Minus), this);
+#else
+    QShortcut *notesZoomInShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_Plus), this);
+    QShortcut *notesZoomInEqualShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_Equal), this); // Handles unshifted '+' key
+    QShortcut *notesZoomOutShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_Minus), this);
+#endif
+
+    connect(notesZoomInShortcut, &QShortcut::activated, m_notesEdit, [this]() { m_notesEdit->zoomIn(1); });
+    connect(notesZoomInEqualShortcut, &QShortcut::activated, m_notesEdit, [this]() { m_notesEdit->zoomIn(1); });
+    connect(notesZoomOutShortcut, &QShortcut::activated, m_notesEdit, [this]() { m_notesEdit->zoomOut(1); });
+
     notesLayout->addLayout(notesHeaderLayout);
     notesLayout->addWidget(m_notesEdit);
 
@@ -250,7 +265,14 @@ void ItemEditDialog::loadItemData(const HistoryItem &item) {
     m_endYearSpin->setValue(item.endYear);
     m_endUncertainCheck->setChecked(item.endUncertain);
     m_placeEdit->setText(item.place);
-    m_notesEdit->setHtml(item.notes);
+
+    QString html = item.notes;
+    // Remove explicit font-size from inline styles so zoomIn/zoomOut works correctly
+    QRegularExpression fontSizeRegex(R"(font-size\s*:\s*[^;"]+;?)", QRegularExpression::CaseInsensitiveOption);
+    html.replace(fontSizeRegex, "");
+    QRegularExpression emptyStyleRegex(R"(\s*style\s*=\s*["']\s*["'])", QRegularExpression::CaseInsensitiveOption);
+    html.replace(emptyStyleRegex, "");
+    m_notesEdit->setHtml(html);
 
     updateFormatButtons();
 }

@@ -58,9 +58,17 @@
 
 static QStringList parseCsvLine(const QString &line);
 
-// Helper function to convert plain text URLs into clickable HTML anchor tags safely
+// Helper function to convert plain text URLs into clickable HTML anchor tags safely and clean font sizes for zooming
 static QString linkifyNotes(QString text) {
     if (text.isEmpty()) return text;
+
+    // Remove explicit font-size from inline styles so QTextBrowser zoomIn/zoomOut works correctly
+    QRegularExpression fontSizeRegex(R"(font-size\s*:\s*[^;"]+;?)", QRegularExpression::CaseInsensitiveOption);
+    text.replace(fontSizeRegex, "");
+
+    // Clean up empty style attributes left behind
+    QRegularExpression emptyStyleRegex(R"(\s*style\s*=\s*["']\s*["'])", QRegularExpression::CaseInsensitiveOption);
+    text.replace(emptyStyleRegex, "");
 
     // Matches http://, https://, ftp://, or www. URLs that are not already inside an HTML attribute
     QRegularExpression urlRegex(R"((?<!href=["'])(?<!src=["'])\b((https?|ftp)://[^\s<"']+|www\.[^\s<"']+))", QRegularExpression::CaseInsensitiveOption);
@@ -187,7 +195,6 @@ void MainWindow::setupUi() {
     QColor formColor = palette().color(QPalette::Window);
     m_mainSplitter = new QSplitter(Qt::Horizontal, this);
     m_leftSplitter = new QSplitter(Qt::Vertical, this);
-    QAction *exportAction = new QAction(tr("&Export diagram..."), this);
 
     // 1. Table View Grid
     m_tableView = new QTableView(this);
@@ -378,10 +385,10 @@ void MainWindow::setupUi() {
     connect(zoomInBtn, &QPushButton::clicked, m_ganttWidget, &GanttWidget::zoomIn);
     connect(zoomOutBtn, &QPushButton::clicked, m_ganttWidget, &GanttWidget::zoomOut);
     connect(zoomResetBtn, &QPushButton::clicked, m_ganttWidget, &GanttWidget::resetZoom);
+
     connect(m_ganttWidget, &GanttWidget::zoomFactorChanged, this, &MainWindow::updateZoomLabel);
     connect(scrollArea->verticalScrollBar(), &QScrollBar::valueChanged,
             m_ganttWidget, qOverload<>(&QWidget::update));
-    connect(exportAction, &QAction::triggered, this, &MainWindow::exportDiagram);
 
     connect(m_tableView->selectionModel(), &QItemSelectionModel::selectionChanged,
             this, &MainWindow::onTableSelectionChanged);
@@ -468,8 +475,10 @@ void MainWindow::createMenus() {
     updateRecentFileActions();
 
     fileMenu->addSeparator();
+    fileMenu->addAction(tr("Export &selected items to PDF..."), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_E), this, &MainWindow::exportSelectedItemsPdf);
+    fileMenu->addSeparator();
 
-    QAction *exportAction = fileMenu->addAction(tr("&Export diagram..."));
+    QAction *exportAction = fileMenu->addAction(tr("&Export diagram..."), QKeySequence(Qt::CTRL | Qt::Key_D), this, &MainWindow::exportDiagram);
     connect(exportAction, &QAction::triggered, this, &MainWindow::exportDiagram);
     fileMenu->addSeparator();
     fileMenu->addAction("Exit", QKeySequence::Quit, this, &QWidget::close);
@@ -494,6 +503,16 @@ void MainWindow::createMenus() {
     viewMenu->addAction("Zoom &In Diagram", QKeySequence::ZoomIn, m_ganttWidget, &GanttWidget::zoomIn);
     viewMenu->addAction("Zoom &Out Diagram", QKeySequence::ZoomOut, m_ganttWidget, &GanttWidget::zoomOut);
     viewMenu->addAction("&Reset Zoom Diagram", QKeySequence(Qt::CTRL | Qt::Key_0), m_ganttWidget, &GanttWidget::resetZoom);
+    viewMenu->addSeparator();
+
+#ifdef Q_OS_APPLE
+    viewMenu->addAction("Zoom In &Notes", QKeySequence(Qt::META | Qt::ALT | Qt::Key_Plus), m_notesMemo, [this]() { m_notesMemo->zoomIn(1); });
+    viewMenu->addAction("Zoom Out N&otes", QKeySequence(Qt::META | Qt::ALT | Qt::Key_Minus), m_notesMemo, [this]() { m_notesMemo->zoomOut(1); });
+#else
+    viewMenu->addAction("Zoom In &Notes", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_Plus), m_notesMemo, [this]() { m_notesMemo->zoomIn(1); });
+    viewMenu->addAction("Zoom Out N&otes", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_Minus), m_notesMemo, [this]() { m_notesMemo->zoomOut(1); });
+#endif
+
     viewMenu->addSeparator();
 
     QMenu *helpMenu = menuBar()->addMenu("&Help");
@@ -725,6 +744,131 @@ void MainWindow::performSearch(const QString &query, int startIndex, bool wrap, 
     if (!found) {
         QMessageBox::information(this, tr("Find"), tr("No matching items found for '%1'.").arg(query));
     }
+}
+
+void MainWindow::exportSelectedItemsPdf() {
+    QModelIndexList selectedRows = m_tableView->selectionModel()->selectedRows();
+    if (selectedRows.isEmpty()) {
+        QMessageBox::information(this, tr("Export Selected Items"), tr("Please select at least one item to export."));
+        return;
+    }
+
+    QString initialPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/Items.pdf";
+    QString fileName = QFileDialog::getSaveFileName(
+        this,
+        tr("Export Selected Items to PDF"),
+        initialPath,
+        tr("PDF Files (*.pdf);;All Files (*)")
+        );
+
+    if (fileName.isEmpty()) return;
+
+    if (!fileName.endsWith(".pdf", Qt::CaseInsensitive)) {
+        fileName += ".pdf";
+    }
+
+    QPdfWriter pdfWriter(fileName);
+    pdfWriter.setPageSize(QPageSize(QPageSize::A4));
+    pdfWriter.setPageOrientation(QPageLayout::Portrait);
+    pdfWriter.setResolution(300);
+
+    // Set custom page margins: QMarginsF(left, top, right, bottom) in Millimeters
+    pdfWriter.setPageMargins(QMarginsF(10.0, 10.0, 20.0, 20.0), QPageLayout::Millimeter);
+
+    QPainter painter;
+    if (!painter.begin(&pdfWriter)) {
+        QMessageBox::critical(this, tr("Export Error"), tr("Failed to initialize PDF writer."));
+        return;
+    }
+
+    // Sort selected proxy rows so export order matches visual table display (using index-based loop to avoid clazy warnings)
+    QList<int> proxyRows;
+    for (int i = 0; i < selectedRows.size(); ++i) {
+        proxyRows.append(selectedRows.at(i).row());
+    }
+    std::sort(proxyRows.begin(), proxyRows.end());
+
+    QPageLayout layout = pdfWriter.pageLayout();
+    QRectF pageRect = layout.paintRectPixels(pdfWriter.resolution());
+
+    for (int i = 0; i < proxyRows.size(); ++i) {
+        if (i > 0) {
+            pdfWriter.newPage();
+        }
+
+        int proxyRow = proxyRows.at(i);
+        QModelIndex sourceIdx = m_proxyModel->mapToSource(m_proxyModel->index(proxyRow, 0));
+        const HistoryItem &item = m_model->getItem(sourceIdx.row());
+
+        // Map kind enum/value to text label
+        QString kindLabel;
+        switch (static_cast<int>(item.kind)) {
+        case 0: kindLabel = "Event"; break;
+        case 1: kindLabel = "Document"; break;
+        case 2: kindLabel = "Person"; break;
+        default: kindLabel = "Event"; break;
+        }
+
+        QTextDocument doc;
+
+        QString htmlContent = QString(R"(
+            <html>
+            <head>
+            <style>
+                body { font-family: 'Avenir Next', 'Helvetica Neue', sans-serif; font-size: 18pt; color: #222222; }
+                h1 { color: #1a237e; border-bottom: 3px solid #1a237e; padding-bottom: 8px; font-size: 30pt; margin-bottom: 25px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 30px; }
+                td { padding: 14px 18px; font-size: 18pt; }
+                td.label { font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 1px solid #d0d0d0; }
+                td.value { width: 70%; border-bottom: 1px solid #d0d0d0; }
+                .notes-title { font-weight: bold; font-size: 22pt; color: #1a237e; margin-top: 35px; margin-bottom: 15px; border-bottom: 2px solid #cccccc; }
+                .notes-body {
+                    background-color: #fcfcfc;
+                    border: 1px solid #cccccc;
+                    padding: 18px;
+                    border-radius: 6px;
+                    font-size: 17pt;
+                    line-height: 1.6;
+                    word-wrap: break-word;
+                    white-space: pre-wrap;
+                }
+            </style>
+            </head>
+            <body>
+                <h1>Item #%1: %2</h1>
+                <table>
+                    <tr><td class="label">Kind:</td><td class="value">%3</td></tr>
+                    <tr><td class="label">Name:</td><td class="value">%2</td></tr>
+                    <tr><td class="label">Start Year:</td><td class="value">%4 %5</td></tr>
+                    <tr><td class="label">End Year:</td><td class="value">%6 %7</td></tr>
+                    <tr><td class="label">Place:</td><td class="value">%8</td></tr>
+                </table>
+                <div class="notes-title">Notes</div>
+                <div class="notes-body">%9</div>
+            </body>
+            </html>
+        )").arg(QString::number(i + 1),
+                                       item.name.toHtmlEscaped(),
+                                       kindLabel.toHtmlEscaped(),
+                                       QString::number(item.startYear),
+                                       item.startUncertain ? "(Uncertain)" : "",
+                                       item.endYear > 0 ? QString::number(item.endYear) : "N/A",
+                                       item.endUncertain ? "(Uncertain)" : "",
+                                       item.place.toHtmlEscaped(),
+                                       item.notes.isEmpty() ? "<em>No notes available.</em>" : linkifyNotes(item.notes));
+
+        doc.setHtml(htmlContent);
+        doc.setTextWidth(pageRect.width());
+
+        painter.save();
+        painter.translate(pageRect.left(), pageRect.top());
+        doc.drawContents(&painter);
+        painter.restore();
+    }
+
+    painter.end();
+
+    QMessageBox::information(this, tr("Export Successful"), tr("Exported %1 item(s) to PDF.").arg(proxyRows.size()));
 }
 
 void MainWindow::exportDiagram() {

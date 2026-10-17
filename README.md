@@ -2,7 +2,7 @@
 
 # TableHistory
 
-Version 1.0.6, published on October 16 2026.
+Version 1.0.7, published on October 17 2026.
 
 Author and copyright: Massimo Nardello, Modena (Italy) 2026.
 
@@ -38,14 +38,13 @@ The form to edit the items looks like this:
 
 ## Features
 
-The app may create and manage many historical items in a grid at the left side of the interface. Each item has a kind field, whose value could be `Person`, `Document` or `Event`, a name, a beginning and end year, a place and free-length formatted notes. The `Event` kind may be used also for historical periods. The range of the years is from -20000 (20.000 b.C.) to 3000 (3.000 c.e.). If the beginning year is equal to the end year, because the item refers to a single-year document or event, the end year will not be shown in the grid. The possibile author of a document may be typed before or after its title among parentheses or after a separator.
+The app may create and manage many historical items in a grid at the left side of the interface. Each item has a kind field, whose value could be `Person`, `Document` or `Event`, a name, a beginning and end year, a place and a free-length formatted notes. The `Event` kind may be used also for historical periods. The range of the years is from -20000 (20.000 b.C.) to 3000 (3.000 c.e.). If the beginning year is equal to the end year, because the item refers to a single-year document or event, the end year will not be shown in the grid. The possibile author of a document may be typed before or after its name (title) among parentheses or after a separator.
 
 The app is meant to manage very wide periods of time, so items’ temporal location is identified only by beginning and end years, not by months or days. If their location were more precise, the diagram would become unmanageable. So, detailed temporal information like months, days or hours is to be typed in the notes.
 
-Anyway, if it's necessary to sort the items on a very detailed beginning and end date, a workaround is to type the first date before the name of the items, and then sort the items by name. For this trick to work properly, the date must be in the format `year - month - day`, and possibly the time in the format `hour - minutes`. The year must always be 4 digits long, the month and day always 2 digits long, and the hours and minutes always 2 digits long. For instance: `B.C. 0044/03/15 • Assassination of Julius Caesar`, or `C.E. 1953/06/02 • Coronation of Queen Elizabeth II`, or `C.E. 2001/09/11 08:46 • American Airlines Flight 11 crashes into the North Tower of the World Trade Center`.
+Anyway, if it's necessary to sort the items on a very detailed beginning and end date, a workaround is to type the date before the name of the items, and then sort them by name. For this trick to work properly, the date must be in the format `year - month - day`, followed possibly by the time in the format `hour - minutes`. The year must always be 4 digits long, the month and day always 2 digits long, and the hours and minutes always 2 digits long. For instance: `B.C. 0044/03/15 • Assassination of Julius Caesar`, or `C.E. 1953/06/02 • Coronation of Queen Elizabeth II`, or `C.E. 2001/09/11 08:46 • American Airlines Flight 11 crashes into the North Tower of the World Trade Center`.
 
-
-The grid and the notes field below it are read-only to avoid unwanted changes to existing items. Each item may be created or edited in a form that is shown with the menu items `Items - Add...` or `Items - Edit...`, or with a double click on an existing item in the grid. In the notes, the internet links are properly formatted and functional, but not in the `Add item` / `Edit item` form used to create or edit an item.
+The grid and the notes field below it are read-only to avoid unwanted changes to existing items. Each item may be created or edited in a form that is shown with the menu items `Items - Add...` or `Items - Edit...`, or with a double click on an existing item in the grid. In the notes, the internet links are properly formatted and functional, but not in the `Add item` / `Edit item` form used to create or edit an item to allow the user to change them more easily. In this form, it's possibile to increase or decrease the font size of the notes using the shortcuts `Ctrl+` + `Alt` + `+` and `Ctrl+` + `Alt` + `-`.
 
 Click on a header of a column grid to sort the items in ascending and then in descending order on that column. To sort data on more columns, sort on each one of them starting from the last one. For instance, to have the items sorted by kind and start year, sort them on start year and then on kind.
 
@@ -68,7 +67,9 @@ In the `Add item` / `Edit item` form, the buttons above the editor of the notes 
 
 To save data and close the form, use the button `OK` or the shortcut `Meta / Ctrl + Return`. Press `Esc` to discard changes.
 
-At the right side of the main form of the app, the Gantt diagram shows the historical location of the various items. When some year is uncertain, the bar is printed not with a solid color but with a lighter grid. The diagram may be zoomed (see the zoom bar at the bottom) and scrolled and exported in a vectorial PDF, always with a white background in spite of the theme of the operative system (light or dark). The PDF can be resized infinitely without loss of quality.
+At the right side of the main form of the app, the Gantt diagram shows the historical location of the various items. When some year is uncertain, the bar is printed not with a solid color, but as a light grid. The diagram may be zoomed (see the zoom bar at the bottom) and scrolled, and also exported in a vectorial PDF, always with a white background in spite of the theme in use in the operative system (light or dark). The PDF can be resized infinitely without loss of quality.
+
+The selected items may be exported also as forms in PDF format.
 
 Data are stored in a `.csv` file, so no database is used.
 
@@ -81,6 +82,7 @@ Data are stored in a `.csv` file, so no database is used.
 - Save: save the current file.
 - Save as...: save the current file with a new name.
 - Recent files: open the last 8 loaded files.
+- Export selected items to PDF...: export the selected items as forms in a PDF file.
 - Export diagram...: export the diagram as a vectorial PDF.
 
 ### Items
@@ -100,6 +102,8 @@ Data are stored in a `.csv` file, so no database is used.
 - Zoom In Diagram: make the diagram wider.
 - Zoom Out Diagram: make the diagram narrower.
 - Reset Zoom Diagram: reset the zoom of the diagram.
+- Zoom In Notes: increase the size of the font of the notes below the grid.
+- Zoom Out Notes: decrease the size of the font of the notes below the grid.
 - Enter full screen: make the app full screen.
 
 ### Use of AI to gather data
@@ -107,16 +111,14 @@ Data are stored in a `.csv` file, so no database is used.
 It's possible to gather data from AI, like Gemini, copy them in the clipboard and paste them in the different fields of the app. To do so, use a prompt like this (tested on Gemini):
 
 ```
-Provide 100 [or more, or less] cards of important persons, events and documents about [theme of interest].
-Each card must be formatted strictly as a single-line CSV record.
-All the cards must be provided in a code block matching this exact header structure:
+Provide 100 [or more, or less] cards of important persons, events and documents about [theme of interest] to be imported in TableHistory (see https://github.com/maxnd/TableHistory). So, each card must be formatted strictly as a single-line CSV record. All the cards must be provided in a code block matching this exact header structure:
 
 Kind,Name,StartYear,StartUncertain,EndYear,EndUncertain,Place,Notes
 
 Kind must be either Person (value: 2), Document (value: 1), or Event (value: 0).
 StartYear and EndYear must be numbers.
 StartYear must be equal to EndYear if it refers to a single-date event/document.
-If a person is still alive, set the birth year both as StartYear and as EndYear.
+If a person is still alive, set his or her birth year both as StartYear and as EndYear.
 For years b.C., use negative numbers.
 StartUncertain and EndUncertain must be true or false.
 Place must be wrapped in double quotes if it contains spaces or commas.
@@ -127,5 +129,28 @@ TableHistoryItems:
 Kind,Name,StartYear,StartUncertain,EndYear,EndUncertain,Place,Notes
 
 ```
-
 Then copy the result of the AI and paste it in the app with the menu item `Items - Paste from selection`.
+
+## Troubleshooting
+
+- Q. The zoom of the text of the notes doesn't work.
+- A. Select all the text and remove its formatting with the last right button.
+
+## Changes log
+
+### Version 1.0.7
+
+- Added the `File - Export selected items to PDF...`.
+- Added the zoom on the text of the notes.
+- The diagram always has a white background.
+- Improved documentation.
+- Bugs fixing.
+
+### Version 1.0.6
+
+- Added `Recent files` menu item.
+- Added `Find and select` menu item.
+- Improved documentation.
+- Bugs fixing.
+
+[...]
