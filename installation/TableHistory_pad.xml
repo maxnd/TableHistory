@@ -20,7 +20,7 @@
 
   <Program_Info>
     <Program_Name>TableHistory</Program_Name>
-    <Program_Version>1.0.7</Program_Version>
+    <Program_Version>1.0.7.1</Program_Version>
     <Program_Release_Month>10</Program_Release_Month>
     <Program_Release_Day>17</Program_Release_Day>
     <Program_Release_Year>2026</Program_Release_Year>
@@ -36,7 +36,7 @@
       <Application_Icon_URL>https://raw.githubusercontent.com/maxnd/TableHistory/main/icons/icon.png</Application_Icon_URL>
     </Application_URLs>
     <Download_URLs>
-      <Primary_Download_URL>https://github.com/maxnd/TableHistory/releases/download/v1.0.7/TableHistorySetup.exe</Primary_Download_URL>
+      <Primary_Download_URL>https://github.com/maxnd/TableHistory/releases/download/v1.0.7.1/TableHistorySetup.exe</Primary_Download_URL>
     </Download_URLs>
   </Web_Info>
 
