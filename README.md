@@ -38,7 +38,7 @@ The form to edit the items looks like this:
 
 ## Features
 
-The app may create and manage many historical items in a grid at the left side of the interface. Each item has a kind field, whose value could be `Person`, `Document` or `Event`, a name, a beginning and end year, a place and a free-length formatted notes. The `Event` kind may be used also for historical periods. The range of the years is from -20000 (20.000 b.C.) to 3000 (3.000 c.e.). If the beginning year is equal to the end year, because the item refers to a single-year document or event, the end year will not be shown in the grid. The possibile author of a document may be typed before or after its name (title) among parentheses or after a separator.
+The app may create and manage many historical items in a grid at the left side of the interface. Each item has a kind field, whose value could be `Person`, `Document` or `Event`, a name, a beginning and end year, a place and a free-length formatted note. The `Event` kind may be used also for historical periods. The range of the years is from -20000 (20.000 b.C.) to 3000 (3.000 c.e.). If the beginning year is equal to the end year, because the item refers to a single-year document or event, the end year will not be shown in the grid. The possibile author of a document may be typed before or after its name (title) among parentheses or after a separator.
 
 The app is meant to manage very wide periods of time, so items’ temporal location is identified only by beginning and end years, not by months or days. If their location were more precise, the diagram would become unmanageable. So, detailed temporal information like months, days or hours is to be typed in the notes.
 
@@ -69,7 +69,7 @@ To save data and close the form, use the button `OK` or the shortcut `Meta / Ctr
 
 At the right side of the main form of the app, the Gantt diagram shows the historical location of the various items. When some year is uncertain, the bar is printed not with a solid color, but as a light grid. The diagram may be zoomed (see the zoom bar at the bottom) and scrolled, and also exported in a vectorial PDF, always with a white background in spite of the theme in use in the operative system (light or dark). The PDF can be resized infinitely without loss of quality.
 
-The selected items may be exported also as forms in PDF format.
+The selected items may be exported also as a PDF document.
 
 Data are stored in a `.csv` file, so no database is used.
 
@@ -82,7 +82,7 @@ Data are stored in a `.csv` file, so no database is used.
 - Save: save the current file.
 - Save as...: save the current file with a new name.
 - Recent files: open the last 8 loaded files.
-- Export selected items to PDF...: export the selected items as forms in a PDF file.
+- Export selected items to PDF...: export the selected items as a PDF document.
 - Export diagram...: export the diagram as a vectorial PDF.
 
 ### Items
@@ -102,7 +102,7 @@ Data are stored in a `.csv` file, so no database is used.
 - Zoom In Diagram: make the diagram wider.
 - Zoom Out Diagram: make the diagram narrower.
 - Reset Zoom Diagram: reset the zoom of the diagram.
-- Zoom In Notes: increase the size of the font of the notes below the grid.
+- Zoom In Notes: Increase the size of the font of the notes below the grid.
 - Zoom Out Notes: decrease the size of the font of the notes below the grid.
 - Enter full screen: make the app full screen.
 
