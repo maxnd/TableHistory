@@ -21,8 +21,7 @@ xattr -r -d com.apple.quarantine /Applications/TableHistory.app
 ---
 See in the [wiki section](https://github.com/maxnd/TableHistory/wiki) a nice presentation of the app.
 
-Listen to a [interesting detailed podcast](https://github.com/maxnd/TableHistory/raw/main/podcast/Introducing_TableHistory.mp3) about the use of the app made with Google Gemini.
-
+Listen to a [introductory podcast](https://github.com/maxnd/TableHistory/raw/main/podcast/Introducing_TableHistory.mp3) and [advanced podcast](https://github.com/maxnd/TableHistory/raw/main/podcast/Advanced_TableHistory.mp3) on the use of the app. Both the podcasts have been made with Google Gemini.
 ---
 
 ## Look of the app
@@ -48,7 +47,7 @@ The grid and the notes field below it are read-only to avoid unwanted changes to
 
 Click on a header of a column grid to sort the items in ascending and then in descending order on that column. To sort data on more columns, sort on each one of them starting from the last one. For instance, to have the items sorted by kind and start year, sort them on start year and then on kind.
 
-More items may be selected by clicking on them while holding the `Shift` or `Command` buttons. Then they can be deleted, or copied in the clipboard to be pasted in another file. It's also possibile to search for an item containing a specified text in its name, place or notes, or select all the items that contain that text. This last function emulates a filter functionality, while maintaining the full view of all the items. See below for the convenient menu items and shortcuts.
+More items may be selected by clicking on them while holding the `Shift` or `Command` buttons. To select all the items, use the shortcut `Ctrl / Meta` + `A`.Then they can be deleted, or copied in the clipboard to be pasted in another file. It's also possibile to search for an item containing a specified text in its name, place or notes, or select all the items that contain that text. This last function emulates a filter functionality, while maintaining the full view of all the items. See below for the convenient menu items and shortcuts.
 
 In TableHistory, it's possible to delete individual items from a file or copy and paste some of them into another file without compromising the functionality of both files. For this reason, the app does not support links between items. In fact, if some items were deleted or copied to a new file, any existing links between them and other items might be broken.
 
@@ -111,7 +110,7 @@ Data are stored in a `.csv` file, so no database is used.
 It's possible to gather data from AI, like Gemini, copy them in the clipboard and paste them in the different fields of the app. To do so, use a prompt like this (tested on Gemini):
 
 ```
-Provide 100 [or more, or less] cards of important persons, events and documents about [theme of interest] to be imported in TableHistory (see https://github.com/maxnd/TableHistory). So, each card must be formatted strictly as a single-line CSV record. All the cards must be provided in a code block matching this exact header structure:
+Provide 100 [or more, or less] cards of important persons, events and documents about [theme of interest]. Each card must be formatted strictly as a single-line CSV record. All the cards must be provided as a code block matching this exact header structure:
 
 Kind,Name,StartYear,StartUncertain,EndYear,EndUncertain,Place,Notes
 
@@ -123,7 +122,7 @@ For years b.C., use negative numbers.
 StartUncertain and EndUncertain must be true or false.
 Place must be wrapped in double quotes if it contains spaces or commas.
 Notes must contain a brief summary or a complete text formatted with basic HTML tags (like <b>, <i>, <p>) and wrapped in double quotes.
-Provide the CSV data inside a code block, whose first two lines must be:
+Provide the CSV data as code block, whose first two lines must be:
 
 TableHistoryItems:
 Kind,Name,StartYear,StartUncertain,EndYear,EndUncertain,Place,Notes
