@@ -28,15 +28,28 @@
 #include <QTextList>
 #include <QKeyEvent>
 #include <QMimeData>
+#include <QShortcut>
+#include <QGuiApplication>
+#include <QClipboard>
+#include <QMenu>
+#include <QAction>
+#include <QContextMenuEvent>
 
 class NotesTextEdit : public QTextEdit {
     Q_OBJECT
 public:
-    explicit NotesTextEdit(QWidget *parent = nullptr) : QTextEdit(parent) {}
+    explicit NotesTextEdit(QWidget *parent = nullptr) : QTextEdit(parent) {
+        // Setup Ctrl + Shift + V shortcut for plain text paste
+        QShortcut *plainPasteShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_V), this);
+        connect(plainPasteShortcut, &QShortcut::activated, this, &NotesTextEdit::pastePlainText);
+    }
 
 protected:
     void insertFromMimeData(const QMimeData *source) override {
-        if (source->hasText()) {
+        // Normal paste: preserve rich text / HTML formatting if available
+        if (source->hasHtml()) {
+            insertHtml(source->html());
+        } else if (source->hasText()) {
             insertPlainText(source->text());
         } else {
             QTextEdit::insertFromMimeData(source);
@@ -74,6 +87,60 @@ protected:
             }
         }
         QTextEdit::keyPressEvent(e);
+    }
+
+    // Override contextMenuEvent to safely add "Paste as Plain Text" to the popup menu
+    void contextMenuEvent(QContextMenuEvent *event) override {
+        QMenu *menu = createStandardContextMenu(event->pos());
+
+        // Create the "Paste as Plain Text" action
+        QAction *pastePlainTextAction = new QAction(tr("Paste as Plain Text"), menu);
+        pastePlainTextAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_V));
+        connect(pastePlainTextAction, &QAction::triggered, this, &NotesTextEdit::pastePlainText);
+
+        // Find the regular Paste action to borrow its icon and determine placement
+        QAction *pasteAction = nullptr;
+        QAction *actionAfterPaste = nullptr;
+        QList<QAction *> actions = menu->actions();
+
+        for (int i = 0; i < actions.size(); ++i) {
+            QAction *action = actions.at(i);
+            if (action->shortcut() == QKeySequence::Paste || action->text().contains("Paste", Qt::CaseInsensitive)) {
+                pasteAction = action;
+                if (!action->icon().isNull()) {
+                    pastePlainTextAction->setIcon(action->icon());
+                }
+                if (i + 1 < actions.size()) {
+                    actionAfterPaste = actions.at(i + 1);
+                }
+                break;
+            }
+        }
+
+        // Enable or disable based on clipboard content
+        const QMimeData *source = QGuiApplication::clipboard()->mimeData();
+        pastePlainTextAction->setEnabled(source && source->hasText());
+
+        // Insert the action right below the regular Paste item
+        if (actionAfterPaste) {
+            menu->insertAction(actionAfterPaste, pastePlainTextAction);
+        } else if (pasteAction) {
+            menu->addAction(pastePlainTextAction);
+        } else {
+            menu->addSeparator();
+            menu->addAction(pastePlainTextAction);
+        }
+
+        menu->exec(event->globalPos());
+        delete menu;
+    }
+
+private slots:
+    void pastePlainText() {
+        const QMimeData *source = QGuiApplication::clipboard()->mimeData();
+        if (source && source->hasText()) {
+            insertPlainText(source->text());
+        }
     }
 };
 

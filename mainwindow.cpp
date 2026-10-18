@@ -772,15 +772,9 @@ void MainWindow::exportSelectedItemsPdf() {
     pdfWriter.setResolution(300);
 
     // Set custom page margins: QMarginsF(left, top, right, bottom) in Millimeters
-    pdfWriter.setPageMargins(QMarginsF(10.0, 10.0, 20.0, 20.0), QPageLayout::Millimeter);
+    pdfWriter.setPageMargins(QMarginsF(20.0, 20.0, 20.0, 20.0), QPageLayout::Millimeter);
 
-    QPainter painter;
-    if (!painter.begin(&pdfWriter)) {
-        QMessageBox::critical(this, tr("Export Error"), tr("Failed to initialize PDF writer."));
-        return;
-    }
-
-    // Sort selected proxy rows so export order matches visual table display (using index-based loop to avoid clazy warnings)
+    // Sort selected proxy rows so export order matches visual table display
     QList<int> proxyRows;
     for (int i = 0; i < selectedRows.size(); ++i) {
         proxyRows.append(selectedRows.at(i).row());
@@ -790,16 +784,19 @@ void MainWindow::exportSelectedItemsPdf() {
     QPageLayout layout = pdfWriter.pageLayout();
     QRectF pageRect = layout.paintRectPixels(pdfWriter.resolution());
 
+    QTextDocument doc;
+    doc.setPageSize(pageRect.size());
+
+    QString fullHtml;
     for (int i = 0; i < proxyRows.size(); ++i) {
         if (i > 0) {
-            pdfWriter.newPage();
+            fullHtml += "<div style='page-break-before: always;'></div>";
         }
 
         int proxyRow = proxyRows.at(i);
         QModelIndex sourceIdx = m_proxyModel->mapToSource(m_proxyModel->index(proxyRow, 0));
         const HistoryItem &item = m_model->getItem(sourceIdx.row());
 
-        // Map kind enum/value to text label
         QString kindLabel;
         switch (static_cast<int>(item.kind)) {
         case 0: kindLabel = "Event"; break;
@@ -808,64 +805,69 @@ void MainWindow::exportSelectedItemsPdf() {
         default: kindLabel = "Event"; break;
         }
 
-        QTextDocument doc;
+        // Process notes, replace headers, and ensure all text blocks/paragraphs have uniform styling
+        QString notesHtml;
+        if (item.notes.isEmpty()) {
+            notesHtml = "<em>No notes available.</em>";
+        } else {
+            notesHtml = linkifyNotes(item.notes);
 
-        QString htmlContent = QString(R"(
-            <html>
-            <head>
-            <style>
-                body { font-family: 'Avenir Next', 'Helvetica Neue', sans-serif; font-size: 18pt; color: #222222; }
-                h1 { color: #1a237e; border-bottom: 3px solid #1a237e; padding-bottom: 8px; font-size: 30pt; margin-bottom: 25px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 30px; }
-                td { padding: 14px 18px; font-size: 18pt; }
-                td.label { font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 1px solid #d0d0d0; }
-                td.value { width: 70%; border-bottom: 1px solid #d0d0d0; }
-                .notes-title { font-weight: bold; font-size: 22pt; color: #1a237e; margin-top: 35px; margin-bottom: 15px; border-bottom: 2px solid #cccccc; }
-                .notes-body {
-                    background-color: #fcfcfc;
-                    border: 1px solid #cccccc;
-                    padding: 18px;
-                    border-radius: 6px;
-                    font-size: 17pt;
-                    line-height: 1.6;
-                    word-wrap: break-word;
-                    white-space: pre-wrap;
-                }
-            </style>
-            </head>
-            <body>
-                <h1>Item #%1: %2</h1>
-                <table>
-                    <tr><td class="label">Kind:</td><td class="value">%3</td></tr>
-                    <tr><td class="label">Name:</td><td class="value">%2</td></tr>
-                    <tr><td class="label">Start Year:</td><td class="value">%4 %5</td></tr>
-                    <tr><td class="label">End Year:</td><td class="value">%6 %7</td></tr>
-                    <tr><td class="label">Place:</td><td class="value">%8</td></tr>
+            // Replace header tags with custom divs
+            notesHtml.replace(QRegularExpression("<h1[^>]*>", QRegularExpression::CaseInsensitiveOption), "<div style='font-size: 44pt; font-weight: bold; color: #000000; margin-top: 25px; margin-bottom: 15px;'>");
+            notesHtml.replace(QRegularExpression("</h1>", QRegularExpression::CaseInsensitiveOption), "</div>");
+            notesHtml.replace(QRegularExpression("<h2[^>]*>", QRegularExpression::CaseInsensitiveOption), "<div style='font-size: 42pt; font-weight: bold; color: #000000; margin-top: 20px; margin-bottom: 10px;'>");
+            notesHtml.replace(QRegularExpression("</h2>", QRegularExpression::CaseInsensitiveOption), "</div>");
+            notesHtml.replace(QRegularExpression("<h3[^>]*>", QRegularExpression::CaseInsensitiveOption), "<div style='font-size: 40pt; font-weight: bold; color: #000000; margin-top: 15px; margin-bottom: 8px;'>");
+            notesHtml.replace(QRegularExpression("</h3>", QRegularExpression::CaseInsensitiveOption), "</div>");
+
+            notesHtml = QString("<div style='font-size: 40pt; '>%1</div>").arg(notesHtml);
+        }
+
+        fullHtml += QString(R"(
+            <div style="font-family: 'Avenir Next', 'Helvetica Neue', sans-serif; color: #222222;">
+                <div style="color: #000000; border-bottom: 4px solid #1a237e; padding-bottom: 12px; font-size: 54pt; font-weight: bold; margin-bottom: 35px;">%1. %2</div>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 20px; margin-bottom: 40px;">
+                    <tr>
+                        <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0;">Kind:</td>
+                        <td style="padding: 18px 22px; font-size: 36pt; width: 70%; border-bottom: 2px solid #d0d0d0;">%3</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0;">Name:</td>
+                        <td style="padding: 18px 22px; font-size: 36pt; width: 70%; border-bottom: 2px solid #d0d0d0;">%2</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0;">Start Year:</td>
+                        <td style="padding: 18px 22px; font-size: 36pt; width: 70%; border-bottom: 2px solid #d0d0d0;">%4 %5</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0;">End Year:</td>
+                        <td style="padding: 18px 22px; font-size: 36pt; width: 70%; border-bottom: 2px solid #d0d0d0;">%6 %7</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0;">Place:</td>
+                        <td style="padding: 18px 22px; font-size: 36pt; width: 70%; border-bottom: 2px solid #d0d0d0;">%8</td>
+                    </tr>
                 </table>
-                <div class="notes-title">Notes</div>
-                <div class="notes-body">%9</div>
-            </body>
-            </html>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 45px; margin-bottom: 20px;">
+                    <tr>
+                        <td style="font-weight: bold; font-size: 44pt; color: #000000; border-bottom: 3px solid #cccccc; padding-bottom: 10px;">Notes</td>
+                    </tr>
+                </table>
+                <div style="background-color: #fcfcfc; border: 2px solid #cccccc; padding: 25px; border-radius: 8px;">%9</div>
+            </div>
         )").arg(QString::number(i + 1),
-                                       item.name.toHtmlEscaped(),
-                                       kindLabel.toHtmlEscaped(),
-                                       QString::number(item.startYear),
-                                       item.startUncertain ? "(Uncertain)" : "",
-                                       item.endYear > 0 ? QString::number(item.endYear) : "N/A",
-                                       item.endUncertain ? "(Uncertain)" : "",
-                                       item.place.toHtmlEscaped(),
-                                       item.notes.isEmpty() ? "<em>No notes available.</em>" : linkifyNotes(item.notes));
-
-        doc.setHtml(htmlContent);
-        doc.setTextWidth(pageRect.width());
-
-        painter.save();
-        painter.translate(pageRect.left(), pageRect.top());
-        doc.drawContents(&painter);
-        painter.restore();
+                             item.name.toHtmlEscaped(),
+                             kindLabel.toHtmlEscaped(),
+                             QString::number(item.startYear),
+                             item.startUncertain ? "(Uncertain)" : "",
+                             item.endYear > 0 ? QString::number(item.endYear) : "N/A",
+                             item.endUncertain ? "(Uncertain)" : "",
+                             item.place.toHtmlEscaped(),
+                             notesHtml);
     }
 
-    painter.end();
+    doc.setHtml(fullHtml);
+    doc.print(&pdfWriter);
 
     QMessageBox::information(this, tr("Export Successful"), tr("Exported %1 item(s) to PDF.").arg(proxyRows.size()));
 }
@@ -878,7 +880,7 @@ void MainWindow::exportDiagram() {
     }
     m_ganttWidget->setSelectedIndex(-1);
 
-    QString initialPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/diagram.pdf";
+    QString initialPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/Diagram.pdf";
 
     QString fileName = QFileDialog::getSaveFileName(
         this,
@@ -1178,7 +1180,7 @@ void MainWindow::fileSave() {
 }
 
 void MainWindow::fileSaveAs() {
-    QString initialPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/history.csv";
+    QString initialPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/History.csv";
     QString path = QFileDialog::getSaveFileName(this, "Save Historical Data", initialPath, "CSV Files (*.csv)");
     if (!path.isEmpty()) {
         saveCsvFile(path);

@@ -1,3 +1,24 @@
+/*
+* TableHistory 1.x
+* Author and copyright (C): Massimo Nardello, Modena (Italy) 2026.
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version. You can read the version 3
+* of the Licence in http://www.gnu.org/licenses/gpl-3.0.txt
+* or in the file Licence.txt included in the files of the
+* source code of this software.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* This program has been created with the support of Google Gemini.
+*
+*/
+
 #include "aboutdialog.h"
 #include <QVBoxLayout>
 #include <QLabel>
@@ -22,7 +43,7 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
         iconLabel->setPixmap(pixmap.scaled(128, 128, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
 
-    auto *titleLabel = new QLabel("<h2>TableHistory</h2><h3>Version 1.0.7.1</h3>", this);
+    auto *titleLabel = new QLabel("<h2>TableHistory</h2><h3>Version 1.0.8</h3>", this);
     titleLabel->setAlignment(Qt::AlignCenter);
 
     auto *descLabel = new QLabel("A free and open source C++ Qt 6 application<br>for managing historical records and Gantt timelines.", this);

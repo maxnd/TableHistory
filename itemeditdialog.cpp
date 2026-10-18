@@ -244,7 +244,7 @@ void ItemEditDialog::setupUi() {
 
     layout->activate();
     QSize baseSize = sizeHint();
-    int targetWidth = baseSize.width() * 1.5;
+    int targetWidth = baseSize.width() * 1.8;
     int targetHeight = baseSize.height() * 1.3;
 
     if (QScreen *screen = QGuiApplication::primaryScreen()) {
