@@ -112,7 +112,12 @@ Data are stored in a `.csv` file, so no database is used.
 It's possible to gather data from AI, like Gemini, copy them in the clipboard and paste them in the different fields of the app. To do so, use a prompt like this (tested on Gemini):
 
 ```
-Provide 100 [or more, or less] cards of important persons, events and documents about [theme of interest]. Each card must be formatted strictly as a single-line CSV record. All the cards must be provided as a code block matching this exact header structure:
+Provide 100 [or more, or less] cards of important persons, events and documents about [theme of interest] as a single code block whose first two lines must be:
+
+TableHistoryItems:
+Kind,Name,StartYear,StartUncertain,EndYear,EndUncertain,Place,Notes
+
+Each card must be formatted strictly as a single-line CSV record matching this exact header structure:
 
 Kind,Name,StartYear,StartUncertain,EndYear,EndUncertain,Place,Notes
 
@@ -124,10 +129,6 @@ For years b.C., use negative numbers.
 StartUncertain and EndUncertain must be true or false.
 Place must be wrapped in double quotes if it contains spaces or commas.
 Notes must contain a brief summary or a complete text formatted with basic HTML tags (like <b>, <i>, <p>) and wrapped in double quotes.
-Provide the CSV data as code block, whose first two lines must be:
-
-TableHistoryItems:
-Kind,Name,StartYear,StartUncertain,EndYear,EndUncertain,Place,Notes
 
 ```
 Then copy the result of the AI and paste it in the app with the menu item `Items - Paste from selection`.
