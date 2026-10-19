@@ -45,7 +45,7 @@ The app is meant to manage very wide periods of time, so items’ temporal locat
 
 Anyway, if it's necessary to sort the items on a very detailed date, a workaround is to set normally the beginning and end year, type the specific date for sorting before the name of the items, and then sort them by name. For this trick to work properly, the date must be in the format `year - month - day`, followed possibly by the time in the format `hour - minutes`. The year must always be 4 digits long, the month and day always 2 digits long, and the hours and minutes always 2 digits long. For instance: `B.C. 0044/03/15 • Assassination of Julius Caesar`, or `C.E. 1953/06/02 • Coronation of Queen Elizabeth II`, or `C.E. 2001/09/11 08:46 • American Airlines Flight 11 crashes into the North Tower of the World Trade Center`.
 
-The grid and the notes field below it are read-only to avoid unwanted changes to existing items. Each item may be created or edited in a form that is shown with the menu items `Items - Add...` or `Items - Edit...`, or with a double click on an existing item in the grid. In the notes, the internet links are properly formatted and functional, but not in the `Add item` / `Edit item` form used to create or edit an item to allow the user to change them more easily. In this form, it's possibile to increase or decrease the font size of the notes using the shortcuts `Ctrl` + `Alt` + `+` and `Ctrl+` + `Alt` + `-`, and paste the text from the clipboard as plain text with the proper popup menu item or the shortcut `Ctrl` + `Shift` + `V`. This last functionality allows to paste formatted text take from another app without messing the formatting of the current note.
+The grid and the notes field below it are read-only to avoid unwanted changes to existing items. Each item may be created or edited in a form that is shown with the menu items `Items - Add...` or `Items - Edit...`, or with a double click on an existing item in the grid. In the notes, the internet links are properly formatted and functional, but not in the `Add item` / `Edit item` form used to create or edit an item to allow the user to change them more easily. In this form, it's possibile to increase or decrease the font size of the notes using the shortcuts `Ctrl` + `Alt` + `+` and `Ctrl+` + `Alt` + `-`, and paste the text from the clipboard as plain text with the proper popup menu item or the shortcut `Ctrl` + `Shift` + `V`. This last functionality allows to paste formatted text taken from another app without messing the formatting of the current note.
 
 Click on a header of a column grid to sort the items in ascending and then in descending order on that column. To sort data on more columns, sort on each one of them starting from the last one. For instance, to have the items sorted by kind and start year, sort them on start year and then on kind.
 
@@ -127,7 +127,7 @@ StartYear must be equal to EndYear if it refers to a single-date event/document.
 If a person is still alive, set his or her birth year both as StartYear and as EndYear.
 For years b.C., use negative numbers.
 StartUncertain and EndUncertain must be true or false.
-Place must be wrapped in double quotes if it contains spaces or commas.
+Name and Place must be wrapped in double quotes if the contains spaces or commas.
 Notes must contain a brief summary or a complete text formatted with basic HTML tags (like <b>, <i>, <p>) and wrapped in double quotes.
 
 ```
