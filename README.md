@@ -70,7 +70,7 @@ To save data and close the form, use the button `OK` or the shortcut `Meta / Ctr
 
 At the right side of the main form of the app, the Gantt diagram shows the historical location of the various items. When some year is uncertain, the bar is printed not with a solid color, but as a light grid. The diagram may be zoomed (see the zoom bar at the bottom) and scrolled, and also exported in a vectorial PDF, always with a white background in spite of the theme in use in the operative system (light or dark). The PDF can be resized infinitely without loss of quality.
 
-The selected items may be exported also as a PDF document.
+The selected items may be exported also as a PDF document. The user will be prompted for a title of the document, which will be preceded by a summary of all the items along with their proper page numbers.
 
 Data are stored in a `.csv` file, so no database is used.
 
