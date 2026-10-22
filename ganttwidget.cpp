@@ -212,10 +212,11 @@ void GanttWidget::paintEvent(QPaintEvent *) {
 
     // Theme Detection
     bool isDark = palette().color(QPalette::Window).lightness() < 128;
+    bool isExporting = property("exporting").toBool();
 
-    QColor bgColor           = isDark ? QColor(30, 30, 34)   : QColor(250, 250, 252);
+    QColor bgColor           = isExporting ? Qt::white : (isDark ? QColor(30, 30, 34)   : QColor(250, 250, 252));
     QColor gridLineColor     = isDark ? QColor(60, 60, 68)   : QColor(230, 230, 235);
-    QColor headerBgColor     = isDark ? QColor(38, 38, 42)   : QColor(240, 240, 245); // Background for pinned header
+    QColor headerBgColor     = isExporting ? Qt::white : (isDark ? QColor(38, 38, 42)   : QColor(240, 240, 245)); // Background for pinned header
     QColor headerTextColor   = isDark ? QColor(170, 170, 180): QColor(100, 100, 110);
     QColor headerDividerColor= isDark ? QColor(80, 80, 90)   : QColor(180, 180, 190);
     QColor rowDividerColor   = isDark ? QColor(48, 48, 54)   : QColor(235, 235, 240);

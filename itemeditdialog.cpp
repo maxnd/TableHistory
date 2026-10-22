@@ -313,13 +313,13 @@ void ItemEditDialog::applyHeadingLevel(int level) {
 
     QTextCharFormat charFmt;
     if (newLevel == 1) {
-        charFmt.setFontPointSize(defaultSize * 1.5);
+        charFmt.setFontPointSize(defaultSize * 2.0);
         charFmt.setFontWeight(QFont::Bold);
     } else if (newLevel == 2) {
-        charFmt.setFontPointSize(defaultSize * 1.3);
+        charFmt.setFontPointSize(defaultSize * 1.5);
         charFmt.setFontWeight(QFont::Bold);
     } else if (newLevel == 3) {
-        charFmt.setFontPointSize(defaultSize * 1.1);
+        charFmt.setFontPointSize(defaultSize * 1.2);
         charFmt.setFontWeight(QFont::Bold);
     } else {
         charFmt.setFontPointSize(defaultSize);

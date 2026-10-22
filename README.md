@@ -2,7 +2,7 @@
 
 # TableHistory
 
-Version 1.8.0, published on October 18 2026.
+Version 1.0.9, published on October 22 2026.
 
 Author and copyright: Massimo Nardello, Modena (Italy) 2026.
 
@@ -83,7 +83,7 @@ Data are stored in a `.csv` file, so no database is used.
 - Save: save the current file.
 - Save as...: save the current file with a new name.
 - Recent files: open the last 8 loaded files.
-- Export selected items to PDF...: export the selected items as a PDF document.
+- Export selected items...: export the selected items as a PDF document.
 - Export diagram...: export the diagram as a vectorial PDF.
 
 ### Items
@@ -109,7 +109,7 @@ Data are stored in a `.csv` file, so no database is used.
 
 ### Use of AI to gather data
 
-It's possible to gather data from AI, like Gemini, copy them in the clipboard and paste them in the different fields of the app. To do so, use a prompt like this (tested on Gemini):
+It's possible to gather data from AI, like Gemini or Claude, copy them in the clipboard and paste them in the different fields of the app. To do so, use a prompt like this (tested on Gemini and Claude):
 
 ```
 Provide 100 [or more, or less] cards of important persons, events and documents about [theme of interest] as a single code block whose first two lines must be:
@@ -139,6 +139,14 @@ Then copy the result of the AI and paste it in the app with the menu item `Items
 - A. Select all the text and remove its formatting with the last right button.
 
 ## Revision history
+
+### Version 1.0.9
+
+- The PDF documents now use Helvetica Neue or Arial fonts, have page numbers and a better look.
+- In the PDF documents, when the end year of a person is equal to the beginning year, the first is not printed because the person is still alive.
+- The background of the exported diagram is now white and not light gray.
+- Bugs fixing: in the editor, the font size of the headings was different from the one in the main window.
+- Minor improvements.
 
 ### Version 1.0.8
 

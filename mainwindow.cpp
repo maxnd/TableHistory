@@ -43,6 +43,7 @@
 #include <QGuiApplication>
 #include <QClipboard>
 #include <QDialog>
+#include <QInputDialog>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QTextDocument>
@@ -55,6 +56,7 @@
 #include <QPageSize>
 #include <QPageLayout>
 #include <QStandardPaths>
+#include <QAbstractTextDocumentLayout>
 
 static QStringList parseCsvLine(const QString &line);
 
@@ -475,7 +477,7 @@ void MainWindow::createMenus() {
     updateRecentFileActions();
 
     fileMenu->addSeparator();
-    fileMenu->addAction(tr("Export &selected items to PDF..."), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_E), this, &MainWindow::exportSelectedItemsPdf);
+    fileMenu->addAction(tr("Export &selected items..."), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_E), this, &MainWindow::exportSelectedItemsPdf);
     fileMenu->addSeparator();
 
     fileMenu->addAction(tr("&Export diagram..."), QKeySequence(Qt::CTRL | Qt::Key_D), this, &MainWindow::exportDiagram);
@@ -766,13 +768,25 @@ void MainWindow::exportSelectedItemsPdf() {
         fileName += ".pdf";
     }
 
+    // Ask the user for the PDF export title
+    bool ok;
+    QString exportTitle = QInputDialog::getText(
+        this,
+        tr("PDF Export Title"),
+        tr("Enter the title for the exported PDF index page:"),
+        QLineEdit::Normal,
+        tr("Index of Notes"),
+        &ok
+        );
+    if (!ok) return;
+
     QPdfWriter pdfWriter(fileName);
     pdfWriter.setPageSize(QPageSize(QPageSize::A4));
     pdfWriter.setPageOrientation(QPageLayout::Portrait);
     pdfWriter.setResolution(300);
 
     // Set custom page margins: QMarginsF(left, top, right, bottom) in Millimeters
-    pdfWriter.setPageMargins(QMarginsF(20.0, 20.0, 20.0, 20.0), QPageLayout::Millimeter);
+    pdfWriter.setPageMargins(QMarginsF(20.0, 20.0, 20.0, 10.0), QPageLayout::Millimeter);
 
     // Sort selected proxy rows so export order matches visual table display
     QList<int> proxyRows;
@@ -781,18 +795,29 @@ void MainWindow::exportSelectedItemsPdf() {
     }
     std::sort(proxyRows.begin(), proxyRows.end());
 
-    QPageLayout layout = pdfWriter.pageLayout();
-    QRectF pageRect = layout.paintRectPixels(pdfWriter.resolution());
+    int pageWidth = pdfWriter.width();
+    int pageHeight = pdfWriter.height();
+    int footerHeight = 150; // Reserved footer space in 300 DPI pixels
+    int pageContentHeight = pageHeight - footerHeight;
 
-    QTextDocument doc;
-    doc.setPageSize(pageRect.size());
+    // --- Pass 1: Build HTML with placeholder page numbers and position tokens ---
+    QString baseIndexHtml = QString(R"(
+        <div style="font-family: 'Helvetica Neue', 'Arial', 'Avenir Next', sans-serif; color: #222222;">
+            <div style="color: #000000; border-bottom: 4px solid #1a237e; padding-bottom: 12px; font-size: 54pt; font-weight: bold; margin-bottom: 35px;">%1</div>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                <tr>
+                    <th style="text-align: left; padding: 18px 22px; font-size: 38pt; font-weight: bold; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0; width: 10%;">#</th>
+                    <th style="text-align: left; padding: 18px 22px; font-size: 38pt; font-weight: bold; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0; width: 45%;">Name</th>
+                    <th style="text-align: left; padding: 18px 22px; font-size: 38pt; font-weight: bold; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0; width: 20%;">Kind</th>
+                    <th style="text-align: left; padding: 18px 22px; font-size: 38pt; font-weight: bold; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0; width: 15%;">Start Year</th>
+                    <th style="text-align: left; padding: 18px 22px; font-size: 38pt; font-weight: bold; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0; width: 10%;">Page</th>
+                </tr>
+    )").arg(exportTitle.toHtmlEscaped());
 
-    QString fullHtml;
+    QString indexRowsHtml;
+    QString itemsHtml;
+
     for (int i = 0; i < proxyRows.size(); ++i) {
-        if (i > 0) {
-            fullHtml += "<div style='page-break-before: always;'></div>";
-        }
-
         int proxyRow = proxyRows.at(i);
         QModelIndex sourceIdx = m_proxyModel->mapToSource(m_proxyModel->index(proxyRow, 0));
         const HistoryItem &item = m_model->getItem(sourceIdx.row());
@@ -805,26 +830,55 @@ void MainWindow::exportSelectedItemsPdf() {
         default: kindLabel = "Event"; break;
         }
 
-        // Process notes, replace headers, and ensure all text blocks/paragraphs have uniform styling
+        indexRowsHtml += QString(R"(
+            <tr>
+                <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; color: #222222; border-bottom: 2px solid #d0d0d0;">%1</td>
+                <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; color: #222222; border-bottom: 2px solid #d0d0d0;">%2</td>
+                <td style="padding: 18px 22px; font-size: 36pt; border-bottom: 2px solid #d0d0d0;">%3</td>
+                <td style="padding: 18px 22px; font-size: 36pt; border-bottom: 2px solid #d0d0d0;">%4</td>
+                <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; color: #222222; border-bottom: 2px solid #d0d0d0;">__PAGE_%1__</td>
+            </tr>
+        )").arg(QString::number(i + 1),
+                                  item.name.toHtmlEscaped(),
+                                  kindLabel.toHtmlEscaped(),
+                                  QString::number(item.startYear));
+
+        if (i > 0) {
+            itemsHtml += "<div style='page-break-before: always;'></div>";
+        }
+
+        // Process notes, replace headers with well-scaled sizes, and set normal text to 30pt
         QString notesHtml;
         if (item.notes.isEmpty()) {
             notesHtml = "<em>No notes available.</em>";
         } else {
             notesHtml = linkifyNotes(item.notes);
 
-            // Replace header tags with custom divs
-            notesHtml.replace(QRegularExpression("<h1[^>]*>", QRegularExpression::CaseInsensitiveOption), "<div style='font-size: 44pt; font-weight: bold; color: #000000; margin-top: 25px; margin-bottom: 15px;'>");
+            notesHtml.replace(QRegularExpression("<h1[^>]*>", QRegularExpression::CaseInsensitiveOption), "<div style='font-size: 52pt; font-weight: bold; color: #000000; margin-top: 60px; margin-bottom: 40px;'>");
             notesHtml.replace(QRegularExpression("</h1>", QRegularExpression::CaseInsensitiveOption), "</div>");
-            notesHtml.replace(QRegularExpression("<h2[^>]*>", QRegularExpression::CaseInsensitiveOption), "<div style='font-size: 42pt; font-weight: bold; color: #000000; margin-top: 20px; margin-bottom: 10px;'>");
+            notesHtml.replace(QRegularExpression("<h2[^>]*>", QRegularExpression::CaseInsensitiveOption), "<div style='font-size: 44pt; font-weight: bold; color: #000000; margin-top: 50px; margin-bottom: 30px;'>");
             notesHtml.replace(QRegularExpression("</h2>", QRegularExpression::CaseInsensitiveOption), "</div>");
-            notesHtml.replace(QRegularExpression("<h3[^>]*>", QRegularExpression::CaseInsensitiveOption), "<div style='font-size: 40pt; font-weight: bold; color: #000000; margin-top: 15px; margin-bottom: 8px;'>");
+            notesHtml.replace(QRegularExpression("<h3[^>]*>", QRegularExpression::CaseInsensitiveOption), "<div style='font-size: 40pt; font-weight: bold; color: #000000; margin-top: 40px; margin-bottom: 20px;'>");
             notesHtml.replace(QRegularExpression("</h3>", QRegularExpression::CaseInsensitiveOption), "</div>");
 
-            notesHtml = QString("<div style='font-size: 40pt; '>%1</div>").arg(notesHtml);
+            notesHtml = QString("<div style='font-size: 40pt;'>%1</div>").arg(notesHtml);
         }
 
-        fullHtml += QString(R"(
-            <div style="font-family: 'Avenir Next', 'Helvetica Neue', sans-serif; color: #222222;">
+        QString endYearRow = "";
+        if (static_cast<int>(item.kind) == 2 && item.endYear != item.startYear) {
+            QString endYearVal = item.endYear > 0 ? QString::number(item.endYear) : "N/A";
+            QString endUncertainVal = item.endUncertain ? "(Uncertain)" : "";
+            endYearRow = QString(R"(
+                    <tr>
+                        <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0;">End Year:</td>
+                        <td style="padding: 18px 22px; font-size: 36pt; width: 70%; border-bottom: 2px solid #d0d0d0;">%1 %2</td>
+                    </tr>
+            )").arg(endYearVal, endUncertainVal);
+        }
+
+        itemsHtml += QString(R"(
+            [START_PAGE_%1]
+            <div style="font-family: 'Helvetica Neue', 'Arial', 'Avenir Next', sans-serif; color: #222222;">
                 <div style="color: #000000; border-bottom: 4px solid #1a237e; padding-bottom: 12px; font-size: 54pt; font-weight: bold; margin-bottom: 35px;">%1. %2</div>
                 <table style="width: 100%; border-collapse: collapse; margin-top: 20px; margin-bottom: 40px;">
                     <tr>
@@ -839,37 +893,76 @@ void MainWindow::exportSelectedItemsPdf() {
                         <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0;">Start Year:</td>
                         <td style="padding: 18px 22px; font-size: 36pt; width: 70%; border-bottom: 2px solid #d0d0d0;">%4 %5</td>
                     </tr>
-                    <tr>
-                        <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0;">End Year:</td>
-                        <td style="padding: 18px 22px; font-size: 36pt; width: 70%; border-bottom: 2px solid #d0d0d0;">%6 %7</td>
-                    </tr>
+                    %6
                     <tr>
                         <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0;">Place:</td>
-                        <td style="padding: 18px 22px; font-size: 36pt; width: 70%; border-bottom: 2px solid #d0d0d0;">%8</td>
+                        <td style="padding: 18px 22px; font-size: 36pt; width: 70%; border-bottom: 2px solid #d0d0d0;">%7</td>
                     </tr>
                 </table>
-                <table style="width: 100%; border-collapse: collapse; margin-top: 45px; margin-bottom: 20px;">
-                    <tr>
-                        <td style="font-weight: bold; font-size: 44pt; color: #000000; border-bottom: 3px solid #cccccc; padding-bottom: 10px;">Notes</td>
-                    </tr>
-                </table>
-                <div style="background-color: #fcfcfc; border: 2px solid #cccccc; padding: 25px; border-radius: 8px;">%9</div>
+                <div style="background-color: #fcfcfc; border: 2px solid #cccccc; padding: 25px; border-radius: 8px;">%8</div>
             </div>
         )").arg(QString::number(i + 1),
-                             item.name.toHtmlEscaped(),
-                             kindLabel.toHtmlEscaped(),
-                             QString::number(item.startYear),
-                             item.startUncertain ? "(Uncertain)" : "",
-                             item.endYear > 0 ? QString::number(item.endYear) : "N/A",
-                             item.endUncertain ? "(Uncertain)" : "",
-                             item.place.toHtmlEscaped(),
-                             notesHtml);
+                              item.name.toHtmlEscaped(),
+                              kindLabel.toHtmlEscaped(),
+                              QString::number(item.startYear),
+                              item.startUncertain ? "(Uncertain)" : "",
+                              endYearRow,
+                              item.place.toHtmlEscaped(),
+                              notesHtml);
     }
 
-    doc.setHtml(fullHtml);
-    doc.print(&pdfWriter);
+    QString fullHtml = baseIndexHtml + indexRowsHtml + "</table></div><div style='page-break-before: always;'></div>" + itemsHtml;
 
-    QMessageBox::information(this, tr("Export Successful"), tr("Exported %1 item(s) to PDF.").arg(proxyRows.size()));
+    QTextDocument doc;
+    doc.setPageSize(QSizeF(pageWidth, pageContentHeight));
+    doc.setHtml(fullHtml);
+
+    // --- Pass 2: Calculate actual starting page numbers based on layout bounding rects ---
+    for (int i = 0; i < proxyRows.size(); ++i) {
+        QString token = QString("[START_PAGE_%1]").arg(i + 1);
+        QTextCursor cursor = doc.find(token);
+        int pageNum = 1;
+        if (!cursor.isNull()) {
+            QRectF rect = doc.documentLayout()->blockBoundingRect(cursor.block());
+            qreal y = rect.top();
+            pageNum = static_cast<int>(y / pageContentHeight) + 1;
+        }
+        fullHtml.replace(token, ""); // remove marker token
+        fullHtml.replace(QString("__PAGE_%1__").arg(i + 1), QString::number(pageNum));
+    }
+
+    // Set final HTML with correct page numbers
+    doc.setHtml(fullHtml);
+
+    // --- Render to PDF ---
+    QPainter painter;
+    if (painter.begin(&pdfWriter)) {
+        int pageCount = doc.pageCount();
+        for (int pageIndex = 0; pageIndex < pageCount; ++pageIndex) {
+            if (pageIndex > 0) {
+                pdfWriter.newPage();
+            }
+
+            painter.save();
+            // Restrict drawing area strictly to the content section above the footer
+            painter.setClipRect(0, 0, pageWidth, pageContentHeight);
+            // Shift painter vertically to display each paginated section correctly
+            painter.translate(0, -pageIndex * pageContentHeight);
+            doc.drawContents(&painter);
+            painter.restore();
+
+            // Draw page numbers cleanly inside the reserved bottom footer area
+            QRectF footerRect(0, pageContentHeight, pageWidth, footerHeight);
+            QFont footerFont = painter.font();
+            footerFont.setPointSize(8);
+            painter.setFont(footerFont);
+            QString pageStr = QString("%1").arg(pageIndex + 1);
+            painter.drawText(footerRect, Qt::AlignCenter, pageStr);
+        }
+        painter.end();
+    }
+
+    QMessageBox::information(this, tr("Export Successful"), tr("Exported %1 item(s) to PDF with an index page.").arg(proxyRows.size()));
 }
 
 void MainWindow::exportDiagram() {
@@ -906,6 +999,7 @@ void MainWindow::exportDiagram() {
     lightPalette.setColor(QPalette::WindowText, Qt::black);
     lightPalette.setColor(QPalette::Text, Qt::black);
     m_ganttWidget->setPalette(lightPalette);
+    m_ganttWidget->setProperty("exporting", true);
     m_ganttWidget->update();
 
     QPdfWriter pdfWriter(fileName);
@@ -932,6 +1026,7 @@ void MainWindow::exportDiagram() {
     }
 
     // Restore the original dark theme palette and stylesheet for the UI
+    m_ganttWidget->setProperty("exporting", false);
     m_ganttWidget->setStyleSheet(originalStyle);
     m_ganttWidget->setPalette(originalPalette);
     m_ganttWidget->update();
