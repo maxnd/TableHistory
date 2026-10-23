@@ -314,7 +314,7 @@ void MainWindow::setupUi() {
     m_notesMemo = new QTextBrowser(this);
     m_notesMemo->setReadOnly(true);
     QFont memoFont = m_notesMemo->font();
-    memoFont.setPointSize(qApp->font().pointSize() + 3);
+    memoFont.setPointSize(qApp->font().pointSize() + 5);
     memoFont.setFamily("Avenir Next");
     m_notesMemo->setFont(memoFont);
     m_notesMemo->document()->setDefaultFont(memoFont);
@@ -783,12 +783,24 @@ void MainWindow::exportSelectedItemsPdf() {
     QPdfWriter pdfWriter(fileName);
     pdfWriter.setPageSize(QPageSize(QPageSize::A4));
     pdfWriter.setPageOrientation(QPageLayout::Portrait);
-    pdfWriter.setResolution(300);
+#ifdef Q_OS_APPLE
+    pdfWriter.setResolution(150); // Optimized for a lighter file size
+#else
+    pdfWriter.setResolution(200); // Optimized for a lighter file size
+#endif
 
     // Set custom page margins: QMarginsF(left, top, right, bottom) in Millimeters
     pdfWriter.setPageMargins(QMarginsF(20.0, 20.0, 20.0, 10.0), QPageLayout::Millimeter);
 
-    // Sort selected proxy rows so export order matches visual table display
+    // Helper lambda to format years (handles negative B.C. years)
+    auto formatYear = [](int year) {
+        if (year < 0) {
+            return QString("%1 B.C.").arg(-year);
+        }
+        return QString::number(year);
+    };
+
+    // Sort selected proxy rows so export order matches visual table display[cite: 9]
     QList<int> proxyRows;
     for (int i = 0; i < selectedRows.size(); ++i) {
         proxyRows.append(selectedRows.at(i).row());
@@ -797,20 +809,20 @@ void MainWindow::exportSelectedItemsPdf() {
 
     int pageWidth = pdfWriter.width();
     int pageHeight = pdfWriter.height();
-    int footerHeight = 150; // Reserved footer space in 300 DPI pixels
+    int footerHeight = 60; // Scaled down for 150 DPI
     int pageContentHeight = pageHeight - footerHeight;
 
     // --- Pass 1: Build HTML with placeholder page numbers and position tokens ---
     QString baseIndexHtml = QString(R"(
-        <div style="font-family: 'Helvetica Neue', 'Arial', 'Avenir Next', sans-serif; color: #222222;">
-            <div style="color: #000000; border-bottom: 4px solid #1a237e; padding-bottom: 12px; font-size: 54pt; font-weight: bold; margin-bottom: 35px;">%1</div>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <div style="font-family: 'Helvetica Neue', 'Arial', 'Avenir Next', sans-serif;">
+            <div style="border-bottom: 3px solid #1a237e; padding-bottom: 8px; font-size: 36pt; font-weight: bold; margin-bottom: 60px;">%1</div>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
                 <tr>
-                    <th style="text-align: left; padding: 18px 22px; font-size: 38pt; font-weight: bold; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0; width: 10%;">#</th>
-                    <th style="text-align: left; padding: 18px 22px; font-size: 38pt; font-weight: bold; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0; width: 45%;">Name</th>
-                    <th style="text-align: left; padding: 18px 22px; font-size: 38pt; font-weight: bold; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0; width: 20%;">Kind</th>
-                    <th style="text-align: left; padding: 18px 22px; font-size: 38pt; font-weight: bold; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0; width: 15%;">Start Year</th>
-                    <th style="text-align: left; padding: 18px 22px; font-size: 38pt; font-weight: bold; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0; width: 10%;">Page</th>
+                    <th style="text-align: left; padding: 8px 10px; font-size: 22pt; font-weight: bold; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0; width: 10%;">#</th>
+                    <th style="text-align: left; padding: 8px 10px; font-size: 22pt; font-weight: bold; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0; width: 45%;">Name</th>
+                    <th style="text-align: left; padding: 8px 10px; font-size: 22pt; font-weight: bold; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0; width: 20%;">Kind</th>
+                    <th style="text-align: left; padding: 8px 10px; font-size: 22pt; font-weight: bold; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0; width: 15%;">Start Year</th>
+                    <th style="text-align: left; padding: 8px 10px; font-size: 22pt; font-weight: bold; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0; width: 10%;">Page</th>
                 </tr>
     )").arg(exportTitle.toHtmlEscaped());
 
@@ -832,88 +844,90 @@ void MainWindow::exportSelectedItemsPdf() {
 
         indexRowsHtml += QString(R"(
             <tr>
-                <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; color: #222222; border-bottom: 2px solid #d0d0d0;">%1</td>
-                <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; color: #222222; border-bottom: 2px solid #d0d0d0;">%2</td>
-                <td style="padding: 18px 22px; font-size: 36pt; border-bottom: 2px solid #d0d0d0;">%3</td>
-                <td style="padding: 18px 22px; font-size: 36pt; border-bottom: 2px solid #d0d0d0;">%4</td>
-                <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; color: #222222; border-bottom: 2px solid #d0d0d0;">__PAGE_%1__</td>
+                <td style="padding: 8px 10px; font-size: 22pt; font-weight: bold; border-bottom: 1px solid #d0d0d0;">%1</td>
+                <td style="padding: 8px 10px; font-size: 22pt; font-weight: bold; border-bottom: 1px solid #d0d0d0;">%2</td>
+                <td style="padding: 8px 10px; font-size: 22pt; border-bottom: 1px solid #d0d0d0;">%3</td>
+                <td style="padding: 8px 10px; font-size: 22pt; border-bottom: 1px solid #d0d0d0;">%4</td>
+                <td style="padding: 8px 10px; font-size: 22pt; font-weight: bold; border-bottom: 1px solid #d0d0d0;">__PAGE_%1__</td>
             </tr>
         )").arg(QString::number(i + 1),
                                   item.name.toHtmlEscaped(),
                                   kindLabel.toHtmlEscaped(),
-                                  QString::number(item.startYear));
+                                  formatYear(item.startYear));
 
         if (i > 0) {
             itemsHtml += "<div style='page-break-before: always;'></div>";
         }
 
-        // Process notes, replace headers with well-scaled sizes, and set normal text to 30pt
+        // Process notes, replace headers with scaled sizes, and set normal text to 14pt
         QString notesHtml;
         if (item.notes.isEmpty()) {
             notesHtml = "<em>No notes available.</em>";
         } else {
             notesHtml = linkifyNotes(item.notes);
 
-            notesHtml.replace(QRegularExpression("<h1[^>]*>", QRegularExpression::CaseInsensitiveOption), "<div style='font-size: 52pt; font-weight: bold; color: #000000; margin-top: 60px; margin-bottom: 40px;'>");
+            notesHtml.replace(QRegularExpression("<h1[^>]*>", QRegularExpression::CaseInsensitiveOption), "<div style='font-size: 28pt; font-weight: bold; margin-top: 30px; margin-bottom: 20px;'>");
             notesHtml.replace(QRegularExpression("</h1>", QRegularExpression::CaseInsensitiveOption), "</div>");
-            notesHtml.replace(QRegularExpression("<h2[^>]*>", QRegularExpression::CaseInsensitiveOption), "<div style='font-size: 44pt; font-weight: bold; color: #000000; margin-top: 50px; margin-bottom: 30px;'>");
+            notesHtml.replace(QRegularExpression("<h2[^>]*>", QRegularExpression::CaseInsensitiveOption), "<div style='font-size: 26pt; font-weight: bold; margin-top: 25px; margin-bottom: 15px;'>");
             notesHtml.replace(QRegularExpression("</h2>", QRegularExpression::CaseInsensitiveOption), "</div>");
-            notesHtml.replace(QRegularExpression("<h3[^>]*>", QRegularExpression::CaseInsensitiveOption), "<div style='font-size: 40pt; font-weight: bold; color: #000000; margin-top: 40px; margin-bottom: 20px;'>");
+            notesHtml.replace(QRegularExpression("<h3[^>]*>", QRegularExpression::CaseInsensitiveOption), "<div style='font-size: 24pt; font-weight: bold; margin-top: 20px; margin-bottom: 10px;'>");
             notesHtml.replace(QRegularExpression("</h3>", QRegularExpression::CaseInsensitiveOption), "</div>");
 
-            notesHtml = QString("<div style='font-size: 40pt;'>%1</div>").arg(notesHtml);
+            notesHtml = QString("<div style='font-size: 22pt;'>%1</div>").arg(notesHtml);
         }
 
         QString endYearRow = "";
-        if (static_cast<int>(item.kind) == 2 && item.endYear != item.startYear) {
-            QString endYearVal = item.endYear > 0 ? QString::number(item.endYear) : "N/A";
+        if (item.endYear != 0 && item.endYear != item.startYear) {
+            QString endYearVal = formatYear(item.endYear);
             QString endUncertainVal = item.endUncertain ? "(Uncertain)" : "";
             endYearRow = QString(R"(
                     <tr>
-                        <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0;">End Year:</td>
-                        <td style="padding: 18px 22px; font-size: 36pt; width: 70%; border-bottom: 2px solid #d0d0d0;">%1 %2</td>
+                        <td style="padding: 8px 10px; font-size: 22pt; font-weight: bold; width: 30%; background-color: #f0f4f8; border-bottom: 1px solid #d0d0d0;">End Year:</td>
+                        <td style="padding: 8px 10px; font-size: 22pt; width: 70%; border-bottom: 1px solid #d0d0d0;">%1 %2</td>
                     </tr>
             )").arg(endYearVal, endUncertainVal);
         }
 
         itemsHtml += QString(R"(
             [START_PAGE_%1]
-            <div style="font-family: 'Helvetica Neue', 'Arial', 'Avenir Next', sans-serif; color: #222222;">
-                <div style="color: #000000; border-bottom: 4px solid #1a237e; padding-bottom: 12px; font-size: 54pt; font-weight: bold; margin-bottom: 35px;">%1. %2</div>
-                <table style="width: 100%; border-collapse: collapse; margin-top: 20px; margin-bottom: 40px;">
+            <div style="font-family: 'Helvetica Neue', 'Arial', 'Avenir Next', sans-serif;">
+                <div style="border-bottom: 3px solid #1a237e; padding-bottom: 8px; font-size: 32pt; font-weight: bold; margin-bottom: 20px;">%1. %2</div>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px;">
                     <tr>
-                        <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0;">Kind:</td>
-                        <td style="padding: 18px 22px; font-size: 36pt; width: 70%; border-bottom: 2px solid #d0d0d0;">%3</td>
+                        <td style="padding: 8px 10px; font-size: 22pt; font-weight: bold; width: 30%; background-color: #f0f4f8; border-bottom: 1px solid #d0d0d0;">Kind:</td>
+                        <td style="padding: 8px 10px; font-size: 22pt; width: 70%; border-bottom: 1px solid #d0d0d0;">%3</td>
                     </tr>
                     <tr>
-                        <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0;">Name:</td>
-                        <td style="padding: 18px 22px; font-size: 36pt; width: 70%; border-bottom: 2px solid #d0d0d0;">%2</td>
+                        <td style="padding: 8px 10px; font-size: 22pt; font-weight: bold; width: 30%; background-color: #f0f4f8; border-bottom: 1px solid #d0d0d0;">Name:</td>
+                        <td style="padding: 8px 10px; font-size: 22pt; width: 70%; border-bottom: 1px solid #d0d0d0;">%2</td>
                     </tr>
                     <tr>
-                        <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0;">Start Year:</td>
-                        <td style="padding: 18px 22px; font-size: 36pt; width: 70%; border-bottom: 2px solid #d0d0d0;">%4 %5</td>
+                        <td style="padding: 8px 10px; font-size: 22pt; font-weight: bold; width: 30%; background-color: #f0f4f8; border-bottom: 1px solid #d0d0d0;">Start Year:</td>
+                        <td style="padding: 8px 10px; font-size: 22pt; width: 70%; border-bottom: 1px solid #d0d0d0;">%4 %5</td>
                     </tr>
                     %6
                     <tr>
-                        <td style="padding: 18px 22px; font-size: 36pt; font-weight: bold; width: 30%; color: #444444; background-color: #f0f4f8; border-bottom: 2px solid #d0d0d0;">Place:</td>
-                        <td style="padding: 18px 22px; font-size: 36pt; width: 70%; border-bottom: 2px solid #d0d0d0;">%7</td>
+                        <td style="padding: 8px 10px; font-size: 22pt; font-weight: bold; width: 30%; background-color: #f0f4f8; border-bottom: 1px solid #d0d0d0;">Place:</td>
+                        <td style="padding: 8px 10px; font-size: 22pt; width: 70%; border-bottom: 1px solid #d0d0d0;">%7</td>
                     </tr>
                 </table>
-                <div style="background-color: #fcfcfc; border: 2px solid #cccccc; padding: 25px; border-radius: 8px;">%8</div>
+                <div style="border: 1px solid #cccccc; padding: 15px; border-radius: 6px;">%8</div>
             </div>
         )").arg(QString::number(i + 1),
                               item.name.toHtmlEscaped(),
                               kindLabel.toHtmlEscaped(),
-                              QString::number(item.startYear),
+                              formatYear(item.startYear),
                               item.startUncertain ? "(Uncertain)" : "",
                               endYearRow,
                               item.place.toHtmlEscaped(),
                               notesHtml);
     }
 
-    QString fullHtml = baseIndexHtml + indexRowsHtml + "</table></div><div style='page-break-before: always;'></div>" + itemsHtml;
+    QString fullHtml = QString("<html><body>%1%2</table></div><div style='page-break-before: always;'></div>%3</body></html>")
+                           .arg(baseIndexHtml, indexRowsHtml, itemsHtml);
 
     QTextDocument doc;
+    doc.setDefaultStyleSheet("body { color: #000000; }");
     doc.setPageSize(QSizeF(pageWidth, pageContentHeight));
     doc.setHtml(fullHtml);
 
@@ -944,14 +958,14 @@ void MainWindow::exportSelectedItemsPdf() {
             }
 
             painter.save();
-            // Restrict drawing area strictly to the content section above the footer
+            // Restrict drawing area strictly to the content section above the footer[cite: 9]
             painter.setClipRect(0, 0, pageWidth, pageContentHeight);
-            // Shift painter vertically to display each paginated section correctly
+            // Shift painter vertically to display each paginated section correctly[cite: 9]
             painter.translate(0, -pageIndex * pageContentHeight);
             doc.drawContents(&painter);
             painter.restore();
 
-            // Draw page numbers cleanly inside the reserved bottom footer area
+            // Draw page numbers cleanly inside the reserved bottom footer area[cite: 9]
             QRectF footerRect(0, pageContentHeight, pageWidth, footerHeight);
             QFont footerFont = painter.font();
             footerFont.setPointSize(8);

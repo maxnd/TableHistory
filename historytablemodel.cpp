@@ -22,6 +22,15 @@
 #include "historytablemodel.h"
 #include "historyitem.h"
 
+namespace {
+QVariant formatYear(int year) {
+    if (year < 0) {
+        return QString("%1 B.C.").arg(-year);
+    }
+    return year;
+}
+}
+
 HistoryTableModel::HistoryTableModel(QObject *parent)
     : QAbstractTableModel(parent) {}
 
@@ -48,12 +57,12 @@ QVariant HistoryTableModel::data(const QModelIndex &index, int role) const {
         case ColName:
             return item.name;
         case ColStartYear:
-            return item.startYear;
+            return formatYear(item.startYear);
         case ColStartUncertain:
             return QVariant(); // Checkbox
         case ColEndYear:
             if (item.endYear == item.startYear) return QVariant();
-            return item.endYear;
+            return formatYear(item.endYear);
         case ColEndUncertain:
             return QVariant();   // Checkbox
         case ColPlace:

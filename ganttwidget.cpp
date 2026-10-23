@@ -240,6 +240,12 @@ void GanttWidget::paintEvent(QPaintEvent *) {
     else if (effectiveSpan > 10)  step = 2;
     else                          step = 1;
 
+    // Helper to format years (handling negative values as B.C.)
+    auto formatYear = [](int year, bool uncertain = false) {
+        QString yrStr = (year < 0) ? QString("%1 B.C.").arg(-year) : QString::number(year);
+        return uncertain ? QString("~%1").arg(yrStr) : yrStr;
+    };
+
     // Draw vertical grid lines across the full height
     int startLabelYear = (m_minYear / step) * step;
     for (int yr = startLabelYear; yr <= m_maxYear; yr += step) {
@@ -301,13 +307,13 @@ void GanttWidget::paintEvent(QPaintEvent *) {
         QString label;
         if (item.endYear != item.startYear) {
             label = QString("%1 (%2 – %3)")
-            .arg(item.name,
-                 item.startUncertain ? QString("~%1").arg(item.startYear) : QString::number(item.startYear),
-                 item.endUncertain ? QString("~%1").arg(item.endYear) : QString::number(item.endYear));
+                        .arg(item.name,
+                             formatYear(item.startYear, item.startUncertain),
+                             formatYear(item.endYear, item.endUncertain));
         } else {
             label = QString("%1 (%2)")
             .arg(item.name,
-                 item.startUncertain ? QString("~%1").arg(item.startYear) : QString::number(item.startYear));
+                 formatYear(item.startYear, item.startUncertain));
         }
 
         QRectF textRect(rectF.right() + 8, barTopY, w - rectF.right() - 10, barHeight);
@@ -329,7 +335,7 @@ void GanttWidget::paintEvent(QPaintEvent *) {
         double x = yearToX(yr, w);
 
         painter.setPen(headerTextColor);
-        painter.drawText(QRectF(x - 30, pinnedHeaderY + (m_headerHeight - 18) / 2.0, 60, 18), Qt::AlignCenter, QString::number(yr));
+        painter.drawText(QRectF(x - 35, pinnedHeaderY + (m_headerHeight - 18) / 2.0, 70, 18), Qt::AlignCenter, formatYear(yr));
     }
 
     // Header bottom divider line pinned to viewport

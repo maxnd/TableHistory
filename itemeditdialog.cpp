@@ -178,7 +178,7 @@ void ItemEditDialog::setupUi() {
     m_notesEdit = new NotesTextEdit(this);
     m_notesEdit->setAcceptRichText(true);
     QFont memoFont = m_notesEdit->font();
-    memoFont.setPointSize(qApp->font().pointSize() + 3);
+    memoFont.setPointSize(qApp->font().pointSize() + 5);
     memoFont.setFamily("Avenir Next");
     m_notesEdit->setFont(memoFont);
     m_notesEdit->document()->setDefaultFont(memoFont);
