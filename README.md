@@ -18,13 +18,16 @@ The package for Mac has been compiled for Mac with a Silicon chip (M1 or followi
 xattr -r -d com.apple.quarantine /Applications/TableHistory.app
 ```
 
----
+## Manuals and documentation
 
-See in the [wiki section](https://github.com/maxnd/TableHistory/wiki) a nice presentation of the app.
+[Download the detailed PDF manual of the app in English](https://github.com/maxnd/TableHistory/raw/main/manuals/TableHistory_User_Manual_EN.pdf).
+
+[Download the detailed PDF manual of the app in Italian](https://github.com/maxnd/TableHistory/raw/main/manuals/Manuale_TableHistory_IT.pdf).
+
+See a nice presentation of the app in the [wiki section](https://github.com/maxnd/TableHistory/wiki).
 
 Listen to a [introductory podcast](https://github.com/maxnd/TableHistory/raw/main/podcast/Introducing_TableHistory.mp3) and [advanced podcast](https://github.com/maxnd/TableHistory/raw/main/podcast/Advanced_TableHistory.mp3) on the use of the app. Both the podcasts have been made with Google Gemini.
 
----
 
 ## Look of the app
 
