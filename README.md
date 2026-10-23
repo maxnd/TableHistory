@@ -142,7 +142,7 @@ Then copy the result of the AI and paste it in the app with the menu item `Items
 
 ### Version 1.0.10
 
-- In the grid and in the diagram, the negative years are properly reported as B.C.
+- In the diagram, the negative years are properly reported as B.C.
 - The PDFs exported by the app are now much lighter.
 - Some improvements in the look of the PDF exported.
 
