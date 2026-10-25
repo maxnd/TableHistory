@@ -53,6 +53,8 @@ private slots:
     void onH3Clicked();
     void updateFormatButtons();
     void onClearFmtClicked();
+    void searchFirst();
+    void searchNext();
 
 private:
     void setupUi();
@@ -74,6 +76,11 @@ private:
     QToolButton *m_h2Btn = nullptr;
     QToolButton *m_h3Btn = nullptr;
     QToolButton *m_clearFmtBtn;
+
+    QLineEdit *m_searchEdit;
+    QPushButton *m_searchFirstBtn;
+    QPushButton *m_searchNextBtn;
+    QComboBox *m_langCombo;
 };
 
 #endif // ITEMEDITDIALOG_H

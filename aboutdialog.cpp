@@ -29,7 +29,7 @@
 
 AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
     setWindowTitle("About TableHistory");
-    resize(380, 280); // Slightly increased height to accommodate the icon
+    resize(420, 340); // Increased dimensions to accommodate the new links
 
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(20, 20, 20, 20);
@@ -43,16 +43,12 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
         iconLabel->setPixmap(pixmap.scaled(128, 128, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
 
-    auto *titleLabel = new QLabel("<h2>TableHistory</h2><h3>Version 1.0.10</h3>", this);
+    auto *titleLabel = new QLabel("<h2>TableHistory</h2><h3>Version 1.1.0</h3>", this);
     titleLabel->setAlignment(Qt::AlignCenter);
 
     auto *descLabel = new QLabel("A free and open source C++ Qt 6 application<br>for managing historical records and Gantt timelines.", this);
     descLabel->setWordWrap(true);
     descLabel->setAlignment(Qt::AlignCenter);
-
-    // Copyright Notice
-    auto *copyrightLabel = new QLabel("Copyright © 2026 Massimo Nardello.<br>All rights reserved under GPLv3 licence.", this);
-    copyrightLabel->setAlignment(Qt::AlignCenter);
 
     auto *websiteLabel = new QLabel("<a href=\"https://github.com/maxnd/TableHistory/\">Website on GitHub</a>", this);
     websiteLabel->setTextFormat(Qt::RichText);
@@ -60,6 +56,22 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
     websiteLabel->setOpenExternalLinks(true);
     websiteLabel->setAlignment(Qt::AlignCenter);
 
+    // Manual Download Links
+    auto *enManualLabel = new QLabel("<a href=\"https://github.com/maxnd/TableHistory/raw/main/manuals/TableHistory_User_Manual_EN.pdf\">Download the English manual</a>", this);
+    enManualLabel->setTextFormat(Qt::RichText);
+    enManualLabel->setTextInteractionFlags(Qt::TextBrowserInteraction);
+    enManualLabel->setOpenExternalLinks(true);
+    enManualLabel->setAlignment(Qt::AlignCenter);
+
+    auto *itManualLabel = new QLabel("<a href=\"https://github.com/maxnd/TableHistory/raw/main/manuals/Manuale_TableHistory_IT.pdf\">Download the Italian manual</a>", this);
+    itManualLabel->setTextFormat(Qt::RichText);
+    itManualLabel->setTextInteractionFlags(Qt::TextBrowserInteraction);
+    itManualLabel->setOpenExternalLinks(true);
+    itManualLabel->setAlignment(Qt::AlignCenter);
+
+    // Copyright Notice
+    auto *copyrightLabel = new QLabel("Copyright © 2026 Massimo Nardello.<br>All rights reserved under GPLv3 licence.", this);
+    copyrightLabel->setAlignment(Qt::AlignCenter);
 
     auto *closeBtn = new QPushButton("Close", this);
     closeBtn->setFixedWidth(100);
@@ -70,6 +82,9 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
     layout->addWidget(titleLabel);
     layout->addWidget(descLabel);
     layout->addWidget(websiteLabel);
+    layout->addSpacing(5);
+    layout->addWidget(enManualLabel);
+    layout->addWidget(itManualLabel);
     layout->addStretch();
     layout->addWidget(copyrightLabel);
     layout->addSpacing(10);

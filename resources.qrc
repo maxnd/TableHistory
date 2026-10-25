@@ -2,4 +2,18 @@
     <qresource prefix="/">
         <file>icons/icon.png</file>
     </qresource>
+    <qresource prefix="/dicts">
+        <file alias="en_US.aff">dicts/en_US.aff</file>
+        <file alias="en_US.dic">dicts/en_US.dic</file>
+        <file alias="it_IT.aff">dicts/it_IT.aff</file>
+        <file alias="it_IT.dic">dicts/it_IT.dic</file>
+        <file alias="de_DE.aff">dicts/de_DE.aff</file>
+        <file alias="de_DE.dic">dicts/de_DE.dic</file>
+        <file alias="es_ES.aff">dicts/es_ES.aff</file>
+        <file alias="es_ES.dic">dicts/es_ES.dic</file>
+        <file alias="fr.aff">dicts/fr.aff</file>
+        <file alias="fr.dic">dicts/fr.dic</file>
+        <file alias="pt_PT.aff">dicts/pt_PT.aff</file>
+        <file alias="pt_PT.dic">dicts/pt_PT.dic</file>
+    </qresource>
 </RCC>

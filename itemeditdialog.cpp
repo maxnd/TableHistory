@@ -31,6 +31,20 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QStyleHints>
+#include <QLineEdit>
+#include <QKeyEvent>
+
+class SearchLineEdit : public QLineEdit {
+public:
+    explicit SearchLineEdit(QWidget *parent = nullptr) : QLineEdit(parent) {}
+protected:
+    void keyPressEvent(QKeyEvent *e) override {
+        QLineEdit::keyPressEvent(e);
+        if (e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) {
+            e->accept(); // Marks the event as handled, preventing the dialog from closing
+        }
+    }
+};
 
 ItemEditDialog::ItemEditDialog(QWidget *parent)
     : QDialog(parent) {
@@ -218,12 +232,63 @@ void ItemEditDialog::setupUi() {
     layout->addWidget(notesContainer);
 
     auto *buttonLayout = new QHBoxLayout();
+
+    auto *searchLabel = new QLabel("Search:", this);
+    m_searchEdit = new SearchLineEdit(this);
+    m_searchEdit->setMaximumWidth(160);
+#ifdef Q_OS_APPLE
+    if (isDarkMode) {
+        m_searchEdit->setStyleSheet("QLineEdit { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; padding: 2px; }");
+    } else {
+        m_searchEdit->setStyleSheet("QLineEdit { border-radius: 4px; padding: 2px; }");
+    }
+#endif
+    m_searchFirstBtn = new QPushButton("First", this);
+    m_searchNextBtn = new QPushButton("Next", this);
+    auto *spellLabel = new QLabel("Spell-checking:", this);
+    // Creazione e popolamento del combo box per il cambio lingua
+    m_langCombo = new QComboBox(this);
+    m_langCombo->addItem("No spell-checking", "none");
+    m_langCombo->addItem("English", "en_US");
+    m_langCombo->addItem("Italian", "it_IT");
+    m_langCombo->addItem("German", "de_DE");
+    m_langCombo->addItem("Spanish", "es_ES");
+    m_langCombo->addItem("French", "fr");
+    m_langCombo->addItem("Portuguese", "pt_PT");
+    m_langCombo->setMinimumWidth(180);
+
+    // Load saved language selection into the combo box
+    QSettings settings("Massimo Nardello", "TableHistory");
+    QString savedLang = settings.value("SpellCheck/Language", "en_US").toString();
+    int langIndex = m_langCombo->findData(savedLang);
+    if (langIndex != -1) {
+        m_langCombo->setCurrentIndex(langIndex);
+    }
+#ifdef Q_OS_APPLE
+    if (isDarkMode) {
+        m_langCombo->setStyleSheet("QComboBox { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; padding: 2px; }");
+    } else {
+        m_langCombo->setStyleSheet("QComboBox { border-radius: 4px; padding: 2px; }");
+    }
+#endif
+
+    buttonLayout->addWidget(searchLabel);
+    buttonLayout->addWidget(m_searchEdit);
+    buttonLayout->addWidget(m_searchFirstBtn);
+    buttonLayout->addWidget(m_searchNextBtn);
+    buttonLayout->addSpacing(20);
+    buttonLayout->addWidget(spellLabel);
+    buttonLayout->addWidget(m_langCombo);
+
+    buttonLayout->addStretch();
+
     auto *okBtn = new QPushButton("OK", this);
+    okBtn->setDefault(true);
+    okBtn->setAutoDefault(true);
     okBtn->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Return));
 
     auto *cancelBtn = new QPushButton("Cancel", this);
 
-    buttonLayout->addStretch();
     buttonLayout->addWidget(okBtn);
     buttonLayout->addWidget(cancelBtn);
 
@@ -231,6 +296,10 @@ void ItemEditDialog::setupUi() {
 
     connect(okBtn, &QPushButton::clicked, this, &QDialog::accept);
     connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
+
+    connect(m_searchFirstBtn, &QPushButton::clicked, this, &ItemEditDialog::searchFirst);
+    connect(m_searchNextBtn, &QPushButton::clicked, this, &ItemEditDialog::searchNext);
+    connect(m_searchEdit, &QLineEdit::returnPressed, this, &ItemEditDialog::searchNext);
 
     connect(m_boldBtn, &QToolButton::toggled, this, &ItemEditDialog::onBoldToggled);
     connect(m_italicBtn, &QToolButton::toggled, this, &ItemEditDialog::onItalicToggled);
@@ -242,9 +311,14 @@ void ItemEditDialog::setupUi() {
     connect(m_notesEdit, &QTextEdit::currentCharFormatChanged, this, &ItemEditDialog::updateFormatButtons);
     connect(m_notesEdit, &QTextEdit::cursorPositionChanged, this, &ItemEditDialog::updateFormatButtons);
 
+    connect(m_langCombo, qOverload<int>(&QComboBox::currentIndexChanged), this, [this](int index) {
+        QString langCode = m_langCombo->itemData(index).toString();
+        m_notesEdit->setLanguage(langCode);
+    });
+
     layout->activate();
     QSize baseSize = sizeHint();
-    int targetWidth = baseSize.width() * 1.8;
+    int targetWidth = baseSize.width() * 1.2;
     int targetHeight = baseSize.height() * 1.3;
 
     if (QScreen *screen = QGuiApplication::primaryScreen()) {
@@ -406,6 +480,19 @@ void ItemEditDialog::updateFormatButtons() {
     QTextBlockFormat blockFormat = m_notesEdit->textCursor().blockFormat();
     int headingLevel = blockFormat.headingLevel();
 
+    // Fallback: If headingLevel is not set, check font size and weight
+    if (headingLevel == 0) {
+        qreal defaultSize = m_notesEdit->font().pointSizeF();
+        if (defaultSize <= 0) defaultSize = 10.0;
+        qreal currentSize = format.fontPointSize();
+
+        if (currentSize > 0 && format.fontWeight() >= QFont::Bold) {
+            if (qAbs(currentSize - (defaultSize * 2.0)) < 0.5) headingLevel = 1;
+            else if (qAbs(currentSize - (defaultSize * 1.5)) < 0.5) headingLevel = 2;
+            else if (qAbs(currentSize - (defaultSize * 1.2)) < 0.5) headingLevel = 3;
+        }
+    }
+
     m_boldBtn->blockSignals(true);
     m_italicBtn->blockSignals(true);
     m_h1Btn->blockSignals(true);
@@ -423,4 +510,29 @@ void ItemEditDialog::updateFormatButtons() {
     m_h1Btn->blockSignals(false);
     m_h2Btn->blockSignals(false);
     m_h3Btn->blockSignals(false);
+}
+
+void ItemEditDialog::searchFirst() {
+    QString query = m_searchEdit->text();
+    if (query.isEmpty()) return;
+
+    QTextCursor cursor = m_notesEdit->textCursor();
+    cursor.movePosition(QTextCursor::Start);
+    m_notesEdit->setTextCursor(cursor);
+
+    m_notesEdit->find(query);
+}
+
+void ItemEditDialog::searchNext() {
+    QString query = m_searchEdit->text();
+    if (query.isEmpty()) return;
+
+    bool found = m_notesEdit->find(query);
+    if (!found) {
+        // Wrap around to the beginning if reaching the end of the notes
+        QTextCursor cursor = m_notesEdit->textCursor();
+        cursor.movePosition(QTextCursor::Start);
+        m_notesEdit->setTextCursor(cursor);
+        m_notesEdit->find(query);
+    }
 }
