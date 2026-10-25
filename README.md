@@ -22,9 +22,13 @@ xattr -r -d com.apple.quarantine /Applications/TableHistory.app
 
 ## Manuals and documentation
 
-[Download the detailed PDF manual of the app in English](https://github.com/maxnd/TableHistory/raw/main/manuals/TableHistory_User_Manual_EN.pdf).
+[Download the detailed PDF A4 manual of the app in English](https://github.com/maxnd/TableHistory/raw/main/manuals/TableHistory_User_Manual_EN.pdf).
 
-[Download the detailed PDF manual of the app in Italian](https://github.com/maxnd/TableHistory/raw/main/manuals/Manuale_TableHistory_IT.pdf).
+[Download the detailed PDF A5 manual of the app in English](https://github.com/maxnd/TableHistory/raw/main/manuals/TableHistory_User_Manual_EN_A5.pdf).
+
+[Download the detailed PDF A4 manual of the app in Italian](https://github.com/maxnd/TableHistory/raw/main/manuals/Manuale_TableHistory_IT.pdf).
+
+[Download the detailed PDF A5 manual of the app in Italian](https://github.com/maxnd/TableHistory/raw/main/manuals/Manuale_TableHistory_IT_A5.pdf).
 
 See a nice presentation of the app in the [wiki section](https://github.com/maxnd/TableHistory/wiki).
 
