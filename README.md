@@ -32,7 +32,11 @@ xattr -r -d com.apple.quarantine /Applications/TableHistory.app
 
 See a nice presentation of the app in the [wiki section](https://github.com/maxnd/TableHistory/wiki).
 
-Listen to a [introductory podcast](https://github.com/maxnd/TableHistory/raw/main/podcast/Introducing_TableHistory.mp3) and [advanced podcast](https://github.com/maxnd/TableHistory/raw/main/podcast/Advanced_TableHistory.mp3) on the use of the app. Both the podcasts have been made with Google Gemini.
+Listen to the following podcasts on the use of the app made with Google Gemini.
+
+[Introductory podcast](https://github.com/maxnd/TableHistory/raw/main/podcast/Introducing_TableHistory.mp3).
+[Advanced podcast](https://github.com/maxnd/TableHistory/raw/main/podcast/Advanced_TableHistory.mp3).
+[Use cases podcast](https://github.com/maxnd/TableHistory/raw/main/podcast/Use_Cases_TableHistory.mp3).
 
 
 ## Look of the app
