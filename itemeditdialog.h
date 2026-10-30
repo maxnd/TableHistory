@@ -42,6 +42,7 @@ class ItemEditDialog : public QDialog {
 public:
     explicit ItemEditDialog(QWidget *parent = nullptr);
     explicit ItemEditDialog(const HistoryItem &item, QWidget *parent = nullptr);
+    static void clearCachedTags();
 
     HistoryItem getItem() const;
 
@@ -53,6 +54,8 @@ private slots:
     void onH3Clicked();
     void updateFormatButtons();
     void onClearFmtClicked();
+    void onFillTagsClicked();
+    void onInsertTagClicked();
     void searchFirst();
     void searchNext();
 
@@ -76,6 +79,10 @@ private:
     QToolButton *m_h2Btn = nullptr;
     QToolButton *m_h3Btn = nullptr;
     QToolButton *m_clearFmtBtn;
+
+    QComboBox *m_tagsCombo = nullptr;
+    QPushButton *m_fillTagsBtn = nullptr;
+    QPushButton *m_insertTagBtn = nullptr;
 
     QLineEdit *m_searchEdit;
     QPushButton *m_searchFirstBtn;

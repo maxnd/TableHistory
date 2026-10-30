@@ -42,6 +42,7 @@ class MainWindow : public QMainWindow {
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
+    QList<HistoryItem> allItems() const { return m_model ? m_model->items() : QList<HistoryItem>(); }
 
 protected:
     void closeEvent(QCloseEvent *event) override;

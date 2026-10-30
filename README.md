@@ -2,7 +2,7 @@
 
 # TableHistory
 
-Version 1.1.0, published on October 25 2026.
+Version 1.1.0, published on October 31 2026.
 
 Author and copyright: Massimo Nardello, Modena (Italy) 2026.
 
@@ -81,6 +81,8 @@ In the `Add item` / `Edit item` form, the buttons above the editor of the notes 
 - italics (shortcut: `Meta + I` or `Ctrl + I`);
 - no formatting (shortcut: `Meta + 4` or `Ctrl + 4`).
 
+After these buttons, there is a combo followed by two buttons, `Fill` and `Insert`. The button `Fill` fills the combo with all the existing tags in the file in use. To be recognized as such, each tag must be wrapped by two hash tags (`#`), have no spaces inside, and be contained in a single paragraph. The button `Insert` inserts the selected tag in the combo within the text of the current note at the position of the cursor. This functionality makes it possible to use coherently the same tags.
+
 To save data and close the form, use the button `OK` or the shortcut `Meta / Ctrl + Return`. Press `Esc` to discard changes.
 
 At the right side of the main form of the app, the Gantt diagram shows the historical location of the various items. When some year is uncertain, the bar is printed not with a solid color, but as a light grid. The diagram may be zoomed (see the zoom bar at the bottom) and scrolled, and also exported in a vectorial PDF, always with a white background in spite of the theme in use in the operative system (light or dark). The PDF can be resized infinitely without loss of quality.
@@ -136,7 +138,7 @@ The extracted Hunspell dictionary as well as the custom user word lists:
 
 ### Use of AI to gather data
 
-It's possible to gather data from AI, like Gemini or Claude, copy them in the clipboard and paste them in the different fields of the app. To do so, use a prompt like this (tested on Gemini and Claude):
+It's possible to gather data from AI, like Gemini or Claude, copy them in the clipboard and paste them in the different fields of the app. To do so, use a prompt like this (tested on Gemini, Claude and ChatGPT):
 
 ```
 Provide 100 [or more, or less] cards of important persons, events and documents about [theme of interest] as a single code block whose first two lines must be:
@@ -158,9 +160,83 @@ Name and Place must be wrapped in double quotes if they contain spaces or comma
 Notes must contain a brief summary or a complete text formatted with basic HTML tags (like <b>, <i>, <p>) and wrapped in double quotes.
 
 ```
+
+A far more articulated prompt, in two steps. The first is:
+
+```
+Create 300 entries for people, events, and documents related to [topic], drawn from [attached works] and other specialized sources, following this format:
+(no. | type | name | start year | end year)
+The ‘Type’ field must use these values: 2 = Person, 1 = Document, 0 = Event
+```
+
+The second step is:
+
+```
+Prepare 300 entries regarding [topic]. The entries are listed in the attached index file [file name] and follow this structure:
+(no. | type | name | start year | end year). Provide them in batches of 2.
+
+SOURCES
+- Author1, Title1 (attached as PDF): primary source.
+- Author2, Title2 (attached as PDF).
+- Other specialized studies.
+Do not read the files in their entirety: for each entry, search only for the relevant sections and extract those specific pages. If no relevant sections are found, please state this and rely on the other sources.
+
+NOTES FIELD: MANDATORY STRUCTURE (always, in this order)
+Length: at least [10,000] characters, in English; use only the following tags: h1, h2, h3, p, b, i.
+
+<h1>Name of the entry</h1>
+<h2>Essential Data</h2>
+One line <p><b>Field:</b> value</p> for each field, depending on the type:
+- PERSON: Name (name, nationality/religious affiliation, professional title); Birth (place and date; if living, state “currently living” along with current location); Death (place and date, only if deceased); Activities (positions held and academic chairs, with years); Major Works (titles in <i> with year); Method (or Position/Doctrine); Significance for the matter; Tags.
+- DOCUMENT: Type; Original Title; Author; Date; Place; Thesis; Significance for the matter; Tags.
+- EVENT: Type (nature of the event); Date (including any discussion regarding
+dating); Locations; Key Figures; Sources (with precise references); Significance for the matter; Tags. Tags: always include 3–5 thematic tags in the format #tag#, separated by spaces, in lowercase, and using hyphens; the final tag must always be #to-be-verified#.
+
+<h2>No. Title</h2> (numbered sequentially). First part, depending on the type:
+- PERSON: 1. “The subject according to Author 1” (reference paragraph,
+short quotations in “...”, concluding with a note that the remainder is based on scholarly research); an optional general overview by Author 1; two or three sections “(based on research)” covering life, methodology, and works; Evaluation (Author 1’s assessment).
+- DOCUMENT: presentation according to Author 1; the work and its structure “(based on research)”; reception and criticism; Author 1’s assessment.
+- EVENT: the historical event according to Author 1, citing Author 1 within the text; context and connections; interpretation within Christian texts, using <h3> for unresolved issues (e.g., “The chronological problem”). The title should include “(based on research)” only if the section relies on sources other than Author 1.
+Always include the following, at the end and in this order:
+- Relevance for the matter
+- Essential chronology: one line per entry, formatted as <p><b>year</b> - event</p>
+- Keywords: a single <p> element with terms in <i>, separated by commas
+- Essential bibliography: one <p> element per entry; list Author 1 first (including chapter/paragraph), followed by primary sources (with specific passages), and then scholarly research.
+
+CONTENT GUIDELINES
+- Always distinguish between information provided by Author 1 and information derived from scholarly research.
+- Do not invent quotations or data. Add “(data to be verified)” after any
+uncertain information. Cite Author 1 using only brief, faithful phrases.
+- Verify the years in the index and correct them, noting the correction.
+
+CSV FORMAT (the file begins with “TableHistoryItems:”, followed by the header):
+Kind,Name,StartYear,StartUncertain,EndYear,EndUncertain,Place,Notes
+- Kind: 2=Person, 1=Document, 0=Event
+- Numeric years (BCE years are negative); for a living person: birth year
+used for both StartYear and EndYear
+- Uncertain: true/false
+- Enclose Name and Place in quotation marks if they contain spaces or commas
+- Notes: the entire entry on a SINGLE line, without line breaks, enclosed in quotation marks. 
+Within the entry, do not use straight double quotation marks; use «…» and ’ instead.
+- Example row (Event):
+0,”Census of Quirinius”,6,false,7,true,”Judea, Syria”,”<h1>...</h1>...”
+- Include the “TableHistoryItems:” header and the title row before each submission in the same code block.
+
+OUTPUT
+For each of the two entries: provide only the complete CSV row, with no
+introductions or comments. After each batch, wait for me to type “continue”.
+
+Start from no. ___ (nos. ___ and ___).
+```
+
 Then copy the result of the AI and paste it in the app with the menu item `Items - Paste from selection`.
 
 ## Revision history
+
+### Version 1.1.1
+
+- Added tags list in the editor.
+- Bugs fixing: spell-checking was not working properly with words with accented characters.
 
 ### Version 1.1.0
 

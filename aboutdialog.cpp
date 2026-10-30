@@ -43,7 +43,11 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent) {
         iconLabel->setPixmap(pixmap.scaled(128, 128, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
 
-    auto *titleLabel = new QLabel("<h2>TableHistory</h2><h3>Version 1.1.0</h3>", this);
+    auto *titleLabel = new QLabel(
+        QString("<h2>TableHistory</h2><h3>Version %1</h3>")
+            .arg(QCoreApplication::applicationVersion()),
+        this
+        );
     titleLabel->setAlignment(Qt::AlignCenter);
 
     auto *descLabel = new QLabel("A free and open source C++ Qt 6 application<br>for managing historical records and Gantt timelines.", this);

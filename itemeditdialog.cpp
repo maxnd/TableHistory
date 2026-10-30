@@ -20,6 +20,7 @@
 */
 
 #include "itemeditdialog.h"
+#include "mainwindow.h"
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -33,6 +34,9 @@
 #include <QStyleHints>
 #include <QLineEdit>
 #include <QKeyEvent>
+#include <utility>
+
+static QStringList s_cachedTags;
 
 class SearchLineEdit : public QLineEdit {
 public:
@@ -181,12 +185,32 @@ void ItemEditDialog::setupUi() {
     m_clearFmtBtn->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_4));
     m_clearFmtBtn->setStyleSheet("QToolButton { padding: 2px 6px; }");
 
+    m_tagsCombo = new QComboBox(this);
+    m_tagsCombo->setMinimumWidth(200);
+    if (!s_cachedTags.isEmpty()) {
+        m_tagsCombo->addItems(s_cachedTags);
+    }
+#ifdef Q_OS_APPLE
+    if (isDarkMode) {
+        m_tagsCombo->setStyleSheet("QComboBox { background-color: #2b2b2b; color: #ffffff; border: 1px solid #555555; border-radius: 4px; padding: 2px; }");
+    } else {
+        m_tagsCombo->setStyleSheet("QComboBox { border-radius: 4px; padding: 2px; }");
+    }
+#endif
+
+    m_fillTagsBtn = new QPushButton("Fill", this);
+    m_insertTagBtn = new QPushButton("Insert", this);
+
     notesHeaderLayout->addWidget(m_h1Btn);
     notesHeaderLayout->addWidget(m_h2Btn);
     notesHeaderLayout->addWidget(m_h3Btn);
     notesHeaderLayout->addWidget(m_boldBtn);
     notesHeaderLayout->addWidget(m_italicBtn);
     notesHeaderLayout->addWidget(m_clearFmtBtn);
+    notesHeaderLayout->addSpacing(30);
+    notesHeaderLayout->addWidget(m_tagsCombo);
+    notesHeaderLayout->addWidget(m_fillTagsBtn);
+    notesHeaderLayout->addWidget(m_insertTagBtn);
     notesHeaderLayout->addStretch();
 
     m_notesEdit = new NotesTextEdit(this);
@@ -308,6 +332,9 @@ void ItemEditDialog::setupUi() {
     connect(m_h3Btn, &QToolButton::clicked, this, &ItemEditDialog::onH3Clicked);
     connect(m_clearFmtBtn, &QToolButton::clicked, this, &ItemEditDialog::onClearFmtClicked);
 
+    connect(m_fillTagsBtn, &QPushButton::clicked, this, &ItemEditDialog::onFillTagsClicked);
+    connect(m_insertTagBtn, &QPushButton::clicked, this, &ItemEditDialog::onInsertTagClicked);
+
     connect(m_notesEdit, &QTextEdit::currentCharFormatChanged, this, &ItemEditDialog::updateFormatButtons);
     connect(m_notesEdit, &QTextEdit::cursorPositionChanged, this, &ItemEditDialog::updateFormatButtons);
 
@@ -327,6 +354,56 @@ void ItemEditDialog::setupUi() {
     }
 
     resize(targetWidth, targetHeight);
+}
+
+void ItemEditDialog::clearCachedTags() {
+    s_cachedTags.clear();
+}
+
+void ItemEditDialog::onFillTagsClicked() {
+    QList<HistoryItem> items;
+    MainWindow *mainWin = qobject_cast<MainWindow*>(parent());
+    if (mainWin) {
+        items = mainWin->allItems();
+    }
+    items.append(getItem());
+
+    QSet<QString> uniqueTags;
+    QRegularExpression tagRegex(R"(#[^#\s]+#)");
+
+    for (const auto &item : std::as_const(items)) {
+        QTextDocument doc;
+        doc.setHtml(item.notes);
+
+        QTextBlock block = doc.begin();
+        while (block.isValid()) {
+            QString blockText = block.text();
+            QRegularExpressionMatchIterator it = tagRegex.globalMatch(blockText);
+            while (it.hasNext()) {
+                QRegularExpressionMatch match = it.next();
+                uniqueTags.insert(match.captured(0));
+            }
+            block = block.next();
+        }
+    }
+
+    QStringList sortedTags = uniqueTags.values();
+    sortedTags.sort(Qt::CaseInsensitive);
+
+    // Save to runtime-only cache
+    s_cachedTags = sortedTags;
+
+    m_tagsCombo->clear();
+    m_tagsCombo->addItems(sortedTags);
+}
+
+void ItemEditDialog::onInsertTagClicked() {
+    QString tag = m_tagsCombo->currentText();
+    if (tag.isEmpty()) return;
+
+    QTextCursor cursor = m_notesEdit->textCursor();
+    cursor.insertText(tag + " "); // Inserts the tag followed by a space
+    m_notesEdit->setFocus();
 }
 
 void ItemEditDialog::loadItemData(const HistoryItem &item) {

@@ -58,8 +58,13 @@ protected:
     void highlightBlock(const QString &text) override {
         if (!m_hunspell) return;
 
-        QRegularExpression wordRegex(R"(\b[A-Za-zÀ-ÿ'-]+\b)");
-        QRegularExpressionMatchIterator i = wordRegex.globalMatch(text);
+        // Normalizza il testo in NFC (precomposto)
+        QString normalizedText = text.normalized(QString::NormalizationForm_C);
+
+        // Usa \p{L} per catturare qualsiasi lettera Unicode (inclusi tutti gli accenti)
+        // senza dipendere dai confini ASCII '\b'
+        QRegularExpression wordRegex(R"((?>[\p{L}'-]+))");
+        QRegularExpressionMatchIterator i = wordRegex.globalMatch(normalizedText);
 
         QTextCharFormat wavyFormat;
         wavyFormat.setUnderlineStyle(QTextCharFormat::WaveUnderline);
@@ -71,7 +76,10 @@ protected:
 
             if (word.length() <= 1) continue;
 
-            if (!m_hunspell->spell(word.toStdString())) {
+            // Controllo ortografico tramite Hunspell con codifica UTF-8 forzata
+            // Aggiornato per evitare il warning di deprecazione di Hunspell
+            // Passa un std::string con i byte UTF-8 per usare la firma moderna non deprecata
+            if (!m_hunspell->spell(std::string(word.toUtf8().constData()), nullptr, nullptr)) {
                 setFormat(match.capturedStart(), match.capturedLength(), wavyFormat);
             }
         }
@@ -106,7 +114,7 @@ public:
             while (!in.atEnd()) {
                 QString word = in.readLine().trimmed();
                 if (!word.isEmpty()) {
-                    m_hunspell->add(word.toStdString().c_str());
+                    m_hunspell->add(word.toUtf8().constData());
                 }
             }
             file.close();
@@ -116,7 +124,7 @@ public:
     void addUserWord(const QString &word, const QString &langCode) {
         if (!m_hunspell || word.isEmpty() || langCode.isEmpty() || langCode == "none") return;
 
-        m_hunspell->add(word.toStdString().c_str());
+        m_hunspell->add(word.toUtf8().constData());
 
         QString userDictPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/user_dict_" + langCode + ".txt";
         QFile file(userDictPath);
@@ -270,10 +278,11 @@ protected:
 
         QTextCursor cursor = cursorForPosition(event->pos());
         cursor.select(QTextCursor::WordUnderCursor);
-        QString clickedWord = cursor.selectedText();
+        QString clickedWord = cursor.selectedText().normalized(QString::NormalizationForm_C);
 
         if (m_hunspell && !clickedWord.isEmpty()) {
-            if (!m_hunspell->spell(clickedWord.toStdString())) {
+            // Passa un std::string con i byte UTF-8 anche qui
+            if (!m_hunspell->spell(std::string(clickedWord.toUtf8().constData()), nullptr, nullptr)) {
                 menu->addSeparator();
 
                 QAction *addWordAction = menu->addAction(tr("Add to Dictionary"));
@@ -283,7 +292,8 @@ protected:
                     addUserWord(clickedWord, langCode);
                 });
 
-                std::vector<std::string> suggestions = m_hunspell->suggest(clickedWord.toStdString());
+                std::vector<std::string> suggestions = m_hunspell->suggest(std::string(clickedWord.toUtf8().constData()));
+                // ... resto del codice
 
                 if (!suggestions.empty()) {
                     QMenu *spellMenu = menu->addMenu(tr("Spelling Suggestions"));

@@ -1344,6 +1344,7 @@ void MainWindow::loadCsvFile(const QString &filePath) {
     m_notesMemo->setEnabled(false);
     if (m_actionCopy) m_actionCopy->setEnabled(false);
     if (m_actionSelectAll) m_actionSelectAll->setEnabled(false);
+    ItemEditDialog::clearCachedTags();
 
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
