@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
     // Apply macOS high-DPI scaling and native appearance properties
     QApplication::setOrganizationName("Massimo Nardello");
     QApplication::setApplicationName("TableHistory");
-    QApplication::setApplicationVersion("1.1.0");
+    QApplication::setApplicationVersion("1.1.2");
 
     MainWindow w;
     w.show();

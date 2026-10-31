@@ -786,7 +786,7 @@ void MainWindow::exportSelectedItemsPdf() {
         fileName += ".pdf";
     }
 
-    // Ask the user for the PDF export title
+    // Richiedi il titolo per la pagina di indice del PDF
     bool ok;
     QString exportTitle = QInputDialog::getText(
         this,
@@ -798,19 +798,22 @@ void MainWindow::exportSelectedItemsPdf() {
         );
     if (!ok) return;
 
+    // --- Activate the wait cursor ---
+    QGuiApplication::setOverrideCursor(Qt::WaitCursor);
+
     QPdfWriter pdfWriter(fileName);
     pdfWriter.setPageSize(QPageSize(QPageSize::A4));
     pdfWriter.setPageOrientation(QPageLayout::Portrait);
 #ifdef Q_OS_APPLE
-    pdfWriter.setResolution(150); // Optimized for a lighter file size
+    pdfWriter.setResolution(150);
 #else
-    pdfWriter.setResolution(200); // Optimized for a lighter file size
+    pdfWriter.setResolution(200);
 #endif
 
-    // Set custom page margins: QMarginsF(left, top, right, bottom) in Millimeters
+    // Margini della pagina in millimetri
     pdfWriter.setPageMargins(QMarginsF(20.0, 20.0, 20.0, 10.0), QPageLayout::Millimeter);
 
-    // Helper lambda to format years (handles negative B.C. years)
+    // Funzione helper per formattare gli anni (gestisce gli anni a.C. negativi)
     auto formatYear = [](int year) {
         if (year < 0) {
             return QString("%1 B.C.").arg(-year);
@@ -818,7 +821,7 @@ void MainWindow::exportSelectedItemsPdf() {
         return QString::number(year);
     };
 
-    // Sort selected proxy rows so export order matches visual table display[cite: 9]
+    // Ordinamento delle righe selezionate in base alla visualizzazione della tabella
     QList<int> proxyRows;
     for (int i = 0; i < selectedRows.size(); ++i) {
         proxyRows.append(selectedRows.at(i).row());
@@ -827,12 +830,12 @@ void MainWindow::exportSelectedItemsPdf() {
 
     int pageWidth = pdfWriter.width();
     int pageHeight = pdfWriter.height();
-    int footerHeight = 60; // Scaled down for 150 DPI
+    int footerHeight = 60; // Spazio riservato in basso per il numero di pagina
     int pageContentHeight = pageHeight - footerHeight;
 
-    // --- Pass 1: Build HTML with placeholder page numbers and position tokens ---
+    // --- Passo 1: Costruzione dei frammenti HTML degli elementi ---
     QString baseIndexHtml = QString(R"(
-        <div style="font-family: 'Helvetica Neue', 'Arial', 'Avenir Next', sans-serif;">
+        <div style="font-family: 'Arial', 'Helvetica Neue', sans-serif;">
             <div style="border-bottom: 3px solid #1a237e; padding-bottom: 8px; font-size: 36pt; font-weight: bold; margin-bottom: 60px;">%1</div>
             <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
                 <tr>
@@ -845,7 +848,7 @@ void MainWindow::exportSelectedItemsPdf() {
     )").arg(exportTitle.toHtmlEscaped());
 
     QString indexRowsHtml;
-    QString itemsHtml;
+    QStringList itemHtmlList;
 
     for (int i = 0; i < proxyRows.size(); ++i) {
         int proxyRow = proxyRows.at(i);
@@ -860,6 +863,7 @@ void MainWindow::exportSelectedItemsPdf() {
         default: kindLabel = "Event"; break;
         }
 
+        // Segnaposto temporaneo per la pagina
         indexRowsHtml += QString(R"(
             <tr>
                 <td style="padding: 8px 10px; font-size: 22pt; font-weight: bold; border-bottom: 1px solid #d0d0d0;">%1</td>
@@ -873,11 +877,6 @@ void MainWindow::exportSelectedItemsPdf() {
                                   kindLabel.toHtmlEscaped(),
                                   formatYear(item.startYear));
 
-        if (i > 0) {
-            itemsHtml += "<div style='page-break-before: always;'></div>";
-        }
-
-        // Process notes, replace headers with scaled sizes, and set normal text to 14pt
         QString notesHtml;
         if (item.notes.isEmpty()) {
             notesHtml = "<em>No notes available.</em>";
@@ -906,9 +905,9 @@ void MainWindow::exportSelectedItemsPdf() {
             )").arg(endYearVal, endUncertainVal);
         }
 
-        itemsHtml += QString(R"(
-            [START_PAGE_%1]
-            <div style="font-family: 'Helvetica Neue', 'Arial', 'Avenir Next', sans-serif;">
+        QString singleItemHtml = QString(R"(
+            <html><body>
+            <div style="font-family: 'Arial', 'Helvetica Neue', sans-serif;">
                 <div style="border-bottom: 3px solid #1a237e; padding-bottom: 8px; font-size: 32pt; font-weight: bold; margin-bottom: 20px;">%1. %2</div>
                 <table style="width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px;">
                     <tr>
@@ -931,68 +930,116 @@ void MainWindow::exportSelectedItemsPdf() {
                 </table>
                 <div style="border: 1px solid #cccccc; padding: 15px; border-radius: 6px;">%8</div>
             </div>
+            </body></html>
         )").arg(QString::number(i + 1),
-                              item.name.toHtmlEscaped(),
-                              kindLabel.toHtmlEscaped(),
-                              formatYear(item.startYear),
-                              item.startUncertain ? "(Uncertain)" : "",
-                              endYearRow,
-                              item.place.toHtmlEscaped(),
-                              notesHtml);
+                                          item.name.toHtmlEscaped(),
+                                          kindLabel.toHtmlEscaped(),
+                                          formatYear(item.startYear),
+                                          item.startUncertain ? "(Uncertain)" : "",
+                                          endYearRow,
+                                          item.place.toHtmlEscaped(),
+                                          notesHtml);
+
+        itemHtmlList.append(singleItemHtml);
     }
 
-    QString fullHtml = QString("<html><body>%1%2</table></div><div style='page-break-before: always;'></div>%3</body></html>")
-                           .arg(baseIndexHtml, indexRowsHtml, itemsHtml);
+    QString finalIndexHtml = QString("<html><body>%1%2</table></div></body></html>")
+                                 .arg(baseIndexHtml, indexRowsHtml);
 
-    QTextDocument doc;
-    doc.setDefaultStyleSheet("body { color: #000000; }");
-    doc.setPageSize(QSizeF(pageWidth, pageContentHeight));
-    doc.setHtml(fullHtml);
+    // --- Passo 2: Misurazione esatta delle pagine basata sui documenti reali ---
+    QTextDocument indexDocForMeasure;
+    indexDocForMeasure.setDefaultStyleSheet("body { color: #000000; font-family: 'Arial', 'Helvetica Neue', sans-serif; }");
+    indexDocForMeasure.setPageSize(QSizeF(pageWidth, pageContentHeight));
+    indexDocForMeasure.setHtml(finalIndexHtml);
 
-    // --- Pass 2: Calculate actual starting page numbers based on layout bounding rects ---
+    int currentGlobalPage = indexDocForMeasure.pageCount(); // Quante pagine occupa l'indice
+
+    QList<int> startPages;
+    QList<int> itemPageCounts;
+
+    for (int i = 0; i < itemHtmlList.size(); ++i) {
+        QTextDocument itemDoc;
+        itemDoc.setDefaultStyleSheet("body { color: #000000; font-family: 'Arial', 'Helvetica Neue', sans-serif; }");
+        itemDoc.setPageSize(QSizeF(pageWidth, pageContentHeight));
+        itemDoc.setHtml(itemHtmlList.at(i));
+
+        int pCount = itemDoc.pageCount();
+        itemPageCounts.append(pCount);
+
+        // La pagina d'inizio di questo elemento è esattamente la pagina corrente globale + 1
+        int startPage = currentGlobalPage + 1;
+        startPages.append(startPage);
+
+        // Aggiorna il contatore globale aggiungendo le pagine occupate da questo elemento
+        currentGlobalPage += pCount;
+    }
+
+    // Sostituisci i placeholder nell'HTML dell'indice con i numeri di pagina reali e corretti
     for (int i = 0; i < proxyRows.size(); ++i) {
-        QString token = QString("[START_PAGE_%1]").arg(i + 1);
-        QTextCursor cursor = doc.find(token);
-        int pageNum = 1;
-        if (!cursor.isNull()) {
-            QRectF rect = doc.documentLayout()->blockBoundingRect(cursor.block());
-            qreal y = rect.top();
-            pageNum = static_cast<int>(y / pageContentHeight) + 1;
-        }
-        fullHtml.replace(token, ""); // remove marker token
-        fullHtml.replace(QString("__PAGE_%1__").arg(i + 1), QString::number(pageNum));
+        finalIndexHtml.replace(QString("__PAGE_%1__").arg(i + 1), QString::number(startPages.at(i)));
     }
 
-    // Set final HTML with correct page numbers
-    doc.setHtml(fullHtml);
-
-    // --- Render to PDF ---
+    // --- Passo 3: Rendering definitivo con file leggero e numerazione sequenziale perfetta ---
     QPainter painter;
     if (painter.begin(&pdfWriter)) {
-        int pageCount = doc.pageCount();
-        for (int pageIndex = 0; pageIndex < pageCount; ++pageIndex) {
-            if (pageIndex > 0) {
+        QFont footerFont = painter.font();
+        footerFont.setPointSize(10);
+        footerFont.setFamily("font-family: 'Arial', 'Helvetica Neue', sans-serif;");
+        QRectF footerRect(0, pageContentHeight, pageWidth, footerHeight);
+
+        int globalPageNum = 1;
+
+        // 1. Stampa le pagine dell'indice
+        QTextDocument indexDocFinal;
+        indexDocFinal.setDefaultStyleSheet("body { color: #000000; font-family: 'Arial', 'Helvetica Neue', sans-serif; }");
+        indexDocFinal.setPageSize(QSizeF(pageWidth, pageContentHeight));
+        indexDocFinal.setHtml(finalIndexHtml);
+
+        int indexPageCount = indexDocFinal.pageCount();
+        for (int p = 0; p < indexPageCount; ++p) {
+            if (globalPageNum > 1) {
                 pdfWriter.newPage();
             }
 
             painter.save();
-            // Restrict drawing area strictly to the content section above the footer[cite: 9]
             painter.setClipRect(0, 0, pageWidth, pageContentHeight);
-            // Shift painter vertically to display each paginated section correctly[cite: 9]
-            painter.translate(0, -pageIndex * pageContentHeight);
-            doc.drawContents(&painter);
+            painter.translate(0, -p * pageContentHeight);
+            indexDocFinal.drawContents(&painter);
             painter.restore();
 
-            // Draw page numbers cleanly inside the reserved bottom footer area[cite: 9]
-            QRectF footerRect(0, pageContentHeight, pageWidth, footerHeight);
-            QFont footerFont = painter.font();
-            footerFont.setPointSize(8);
             painter.setFont(footerFont);
-            QString pageStr = QString("%1").arg(pageIndex + 1);
-            painter.drawText(footerRect, Qt::AlignCenter, pageStr);
+            painter.drawText(footerRect, Qt::AlignCenter, QString::number(globalPageNum));
+            globalPageNum++;
         }
+
+        // 2. Stampa ciascun elemento (gestendo correttamente le pagine interne multiple di ogni scheda)
+        for (int i = 0; i < itemHtmlList.size(); ++i) {
+            QTextDocument itemDoc;
+            itemDoc.setDefaultStyleSheet("body { color: #000000; font-family: 'Arial', 'Helvetica Neue', sans-serif; }");
+            itemDoc.setPageSize(QSizeF(pageWidth, pageContentHeight));
+            itemDoc.setHtml(itemHtmlList.at(i));
+
+            int itemPageCount = itemDoc.pageCount();
+            for (int p = 0; p < itemPageCount; ++p) {
+                pdfWriter.newPage();
+
+                painter.save();
+                painter.setClipRect(0, 0, pageWidth, pageContentHeight);
+                painter.translate(0, -p * pageContentHeight);
+                itemDoc.drawContents(&painter);
+                painter.restore();
+
+                painter.setFont(footerFont);
+                painter.drawText(footerRect, Qt::AlignCenter, QString::number(globalPageNum));
+                globalPageNum++;
+            }
+        }
+
         painter.end();
     }
+
+    // --- Restore the normal cursor before showing the success dialog ---
+    QGuiApplication::restoreOverrideCursor();
 
     QMessageBox::information(this, tr("Export Successful"), tr("Exported %1 item(s) to PDF with an index page.").arg(proxyRows.size()));
 }
@@ -1388,6 +1435,15 @@ void MainWindow::loadCsvFile(const QString &filePath) {
     addToRecentFiles(filePath);}
 
 bool MainWindow::saveCsvFile(const QString &filePath, bool showConfirmation) {
+    // Backup handling: if the target file exists, remove any old .bak and copy it
+    QString bakPath = filePath + ".bak";
+    if (QFile::exists(filePath)) {
+        if (QFile::exists(bakPath)) {
+            QFile::remove(bakPath);
+        }
+        QFile::copy(filePath, bakPath);
+    }
+
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QMessageBox::critical(this, "Error", "Could not open file for writing.");
@@ -1408,9 +1464,6 @@ bool MainWindow::saveCsvFile(const QString &filePath, bool showConfirmation) {
 
     QSettings settings("TableHistory", "TableHistory");
     settings.setValue("lastFilePath", filePath);
-
-    m_currentFilePath = filePath;
-    updateStatusBar();
 
     addToRecentFiles(filePath);
 
